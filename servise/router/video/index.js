@@ -1,5 +1,8 @@
 const express = require("express");
 const router = express.Router();
+
+const fs = require("fs");
+const path = require("path");
 const db = require("../../middleware/mysql.js"); // 引入数据库模块
 
 const sendResponse = require("../../utils/response.js");
@@ -31,8 +34,17 @@ router.post("/list", async (req, res) => {
 
     const total = countResult[0].total;
 
+    // 格式化 releaseDate 字段为 YYYY-MM-DD
+    const formattedResults = results.map((video) => {
+      if (video.releaseDate) {
+        const date = new Date(video.releaseDate);
+        video.releaseDate = date.toISOString().split("T")[0]; // 转换为 YYYY-MM-DD
+      }
+      return video;
+    });
+
     sendResponse.success(res, "获取视频列表成功", {
-      list: results,
+      list: formattedResults,
       total,
     });
   } catch (err) {
@@ -64,7 +76,7 @@ router.post("/add", async (req, res) => {
       shortDesc || null,
       coverUrl || null,
       category || null,
-      releaseDate ? new Date(releaseDate) : null,
+      releaseDate ? releaseDate : null,
     ];
 
     const result = await db.query(sql, values);
@@ -77,21 +89,183 @@ router.post("/add", async (req, res) => {
 // 引入封装好的 upload 模块
 const multer = require("../../middleware/multer");
 // 添加上传接口
-router.post("/upload", multer.single("file"), (req, res) => {
+router.post("/upload", multer.array("files"), (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || req.files.length === 0) {
       return sendResponse.error(res, "没有文件上传");
     }
 
     // 构建访问路径（如 /uploads/时间戳-随机数.扩展名）
-    const filePath = `/uploads/${req.file.filename}`;
+    const filePaths = req.files.map((file) => `/uploads/images/${file.filename}`);
 
     sendResponse.success(res, "上传成功", {
-      url: filePath,
+      url: filePaths,
     });
   } catch (err) {
     console.error("上传失败:", err);
     sendResponse.error(res, "上传失败");
+  }
+});
+
+router.get("/download", async (req, res) => {
+  let sql = `SELECT * FROM d_video`;
+
+  const result = await db.query(sql);
+
+  // 检查是否查询到数据
+  if (result.length === 0) {
+    return res.status(404).json({ code: 404, message: "未找到视频数据" });
+  }
+
+  // 使用查询结果生成Markdown内容
+  const video = result[0]; // 假设只需要第一条数据
+  const mdContent = `# ${video.videoName}\n\n${video.actor}`;
+
+  // 指定文件路径
+  const filePath = path.join(__dirname, "output.md");
+
+  // 写入文件
+  fs.writeFile(filePath, mdContent, (err) => {
+    if (err) {
+      console.error("写入文件时发生错误", err);
+      return res.status(500).json({ code: 500, message: "写入文件时发生错误" });
+    } else {
+      console.log("Markdown文件已成功生成");
+      // 发送文件给前端下载
+      res.download(filePath, "video-info.md", (downloadErr) => {
+        if (downloadErr) {
+          console.error("下载文件时发生错误", downloadErr);
+          return res
+            .status(500)
+            .json({ code: 500, message: "下载文件时发生错误" });
+        }
+      });
+    }
+  });
+});
+
+// 编辑视频接口
+router.post("/edit", async (req, res) => {
+  const { id, videoName, actor, shortDesc, coverUrl, category, releaseDate } =
+    req.body;
+
+  // 参数校验
+  if (!id || !videoName || !actor) {
+    return sendResponse.error(res, "缺少必要参数");
+  }
+
+  try {
+    // 构建更新字段
+    const updateFields = [];
+    const values = [];
+
+    if (videoName) {
+      updateFields.push("videoName = ?");
+      values.push(videoName);
+    }
+    if (actor) {
+      updateFields.push("actor = ?");
+      values.push(actor);
+    }
+    if (shortDesc !== undefined) {
+      updateFields.push("shortDesc = ?");
+      values.push(shortDesc || null);
+    }
+    if (coverUrl !== undefined) {
+      updateFields.push("coverUrl = ?");
+      values.push(coverUrl || null);
+    }
+    if (category !== undefined) {
+      updateFields.push("category = ?");
+      values.push(category || null);
+    }
+    if (releaseDate !== undefined) {
+      updateFields.push("releaseDate = ?");
+      values.push(releaseDate ? releaseDate : null);
+    }
+
+    // 构建 SQL 语句
+    const sql = `
+      UPDATE d_video 
+      SET ${updateFields.join(", ")}
+      WHERE id = ?
+    `;
+    values.push(id);
+
+    // 执行更新操作
+    const result = await db.query(sql, values);
+
+    // 检查是否成功更新记录
+    if (result.affectedRows === 0) {
+      return sendResponse.error(res, "未找到要更新的视频");
+    }
+
+    sendResponse.success(res, "视频更新成功", {
+      id: parseInt(id),
+    });
+  } catch (err) {
+    console.error("视频更新失败:", err);
+    sendResponse.error(res, "服务器内部错误");
+  }
+});
+
+// 删除视频接口
+router.delete("/delete/:id", async (req, res) => {
+  const { id } = req.params;
+
+  // 参数校验
+  if (!id) {
+    return sendResponse.error(res, "缺少必要参数: id");
+  }
+
+  try {
+    // 构建 SQL 语句
+    const sql = `DELETE FROM d_video WHERE id = ?`;
+
+    // 执行删除操作
+    const result = await db.query(sql, [id]);
+
+    // 检查是否成功删除记录
+    if (result.affectedRows === 0) {
+      return sendResponse.error(res, "未找到要删除的视频");
+    }
+
+    sendResponse.success(res, "视频删除成功", {
+      id: parseInt(id),
+    });
+  } catch (err) {
+    console.error("视频删除失败:", err);
+    sendResponse.error(res, "服务器内部错误");
+  }
+});
+
+// 添加批量删除接口
+router.post("/batchDelete", async (req, res) => {
+  const { ids } = req.body;
+
+  // 参数校验
+  if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    return sendResponse.error(res, "缺少必要参数: ids");
+  }
+
+  try {
+    // 构建 SQL 语句
+    const sql = `DELETE FROM d_video WHERE id IN (${ids.map(() => "?").join(",")})`;
+
+    // 执行删除操作
+    const result = await db.query(sql, ids);
+
+    // 检查是否成功删除记录
+    if (result.affectedRows === 0) {
+      return sendResponse.error(res, "未找到要删除的视频");
+    }
+
+    sendResponse.success(res, "视频批量删除成功", {
+      count: result.affectedRows,
+    });
+  } catch (err) {
+    console.error("视频批量删除失败:", err);
+    sendResponse.error(res, "服务器内部错误");
   }
 });
 

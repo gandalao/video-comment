@@ -1,10 +1,15 @@
 // useForm.ts
 import { reactive, ref } from "vue";
-import { addVideo, upload } from "@/api/video";
-import type { FormInstance } from "element-plus";
-
+import { addVideo, editVideo, upload } from "@/api/video";
+import {
+  ElMessage,
+  type UploadFile,
+  type UploadProps,
+  type UploadUserFile,
+  type FormInstance,
+} from "element-plus";
 export function useForm(refreshData: () => void) {
-  const formData = reactive({
+  const formData = ref({
     videoName: "",
     actor: "",
     shortDesc: "",
@@ -20,61 +25,76 @@ export function useForm(refreshData: () => void) {
 
   const addDialogVisible = ref(false);
 
-  const showAddDialog = () => {
+  const fileList = ref<UploadUserFile[]>([]);
+  const uploadList = ref<UploadUserFile[]>([]);
+
+  const isEdit = ref(false);
+  const showDialog = (enableEdit: boolean | Event = false) => {
     addDialogVisible.value = true;
+    isEdit.value = typeof enableEdit === "boolean" ? enableEdit : false;
+  };
+
+  const closeDialog = () => {
+    addDialogVisible.value = false;
+    if (formDataRef.value) {
+      formDataRef.value.resetFields();
+    }
+    fileList.value = [];
+    isEdit.value = false;
   };
   const submitForm = async (formEl: FormInstance | undefined) => {
     if (!formEl) return;
     await formEl.validate(async (valid, fields) => {
       if (valid) {
-        await addVideo(formData);
-        addDialogVisible.value = false;
-        formEl.resetFields();
-        refreshData(); // 刷新列表
+        try {
+          const filePaths = await onUpload();
+          formData.value.coverUrl = filePaths.join(";");
+          if (isEdit.value) {
+            await editVideo(formData.value);
+          } else {
+            await addVideo(formData.value);
+          }
+          ElMessage.success("操作成功");
+          closeDialog();
+          refreshData(); // 刷新列表
+        } catch (error) {
+          console.error("视频添加失败:");
+        }
       } else {
         console.log("error submit!", fields);
       }
     });
   };
 
-  const fileInput = ref(); // 用于操作隐藏的 input[type="file"]
-  async function handleCoverUpload(event: Event) {
-    const target = event.target as HTMLInputElement;
-    const file = target.files?.[0];
+  const fileChange = (file: UploadFile, uploadFiles: UploadUserFile[]) => {
+    console.log("文件选择:", file, uploadFiles);
+    fileList.value = uploadFiles;
+    uploadList.value = uploadFiles;
+  };
 
-    if (!file) {
-      alert("请选择一个文件");
-      return;
-    }
-
-    try {
-      const formDataParams = new FormData();
-      formDataParams.append("file", file);
-
-      const response = await upload(formDataParams); // 调用封装的 upload 方法
-
-      if (response.status === 200) {
-        formData.coverUrl = response.data.url; // 填入返回的 URL
-      } else {
-        alert("上传失败");
+  const onUpload = async () => {
+    if (!uploadList.value || uploadList.value.length === 0) return [];
+    const formDataParam = new FormData();
+    uploadList.value.forEach((file) => {
+      if (file.raw) {
+        formDataParam.append("files", file.raw);
       }
-    } catch (err) {
-      console.error("上传封面失败:", err);
-      alert("上传出错");
-    } finally {
-      // 清空 input 值，允许重复上传同一个文件
-      target.value = "";
-    }
-  }
+    });
+
+    const res = await upload(formDataParam);
+
+    return res.data.url;
+  };
 
   return {
     formData,
     formRules,
     formDataRef,
     addDialogVisible,
-    showAddDialog,
+    showDialog,
+    closeDialog,
     submitForm,
-    handleCoverUpload,
-    fileInput,
+    fileList,
+    fileChange,
   };
 }

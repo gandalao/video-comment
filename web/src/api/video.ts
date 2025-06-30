@@ -15,6 +15,24 @@ export function addVideo(data: any) {
     data,
   });
 }
+export function editVideo(data: any) {
+  return service({
+    url: "/video/edit",
+    method: "post",
+    data,
+  });
+}
+export function removeVideo(id: string) {
+  return service.delete("/video/delete/" + id);
+}
+
+export function removeVideos(data: any) {
+  return service({
+    url: "/video/batchDelete",
+    method: "post",
+    data,
+  });
+}
 
 export function upload(data: any) {
   return service({

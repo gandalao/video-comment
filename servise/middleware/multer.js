@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 // 确保 uploads 目录存在
-const uploadDir = path.join(__dirname, '../uploads');
+const uploadDir = path.join(__dirname, '../uploads/images/');
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
 }
@@ -15,7 +15,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
-    const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    // const filename = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+    const filename = file.originalname;
     cb(null, filename); // 设置唯一文件名
   }
 });

@@ -13,10 +13,10 @@ export function useTable() {
   const pageSize = ref(10);
   const total = ref(0);
 
-  const fetchTableData = async () => {
+  const fetchData = async () => {
     const params = {
       videoName: searchParams.videoName,
-      currentPage: currentPage.value,
+      page: currentPage.value,
       pageSize: pageSize.value,
     };
     const response = await getVideoList(params);
@@ -26,7 +26,7 @@ export function useTable() {
 
   const handlePageChange = (page: number) => {
     currentPage.value = page;
-    fetchTableData();
+    fetchData();
   };
 
   return {
@@ -35,7 +35,7 @@ export function useTable() {
     currentPage,
     pageSize,
     total,
-    fetchTableData,
+    fetchData,
     handlePageChange,
   };
 }
