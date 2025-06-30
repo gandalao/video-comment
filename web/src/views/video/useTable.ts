@@ -1,0 +1,41 @@
+import { ref, reactive } from "vue";
+import { getVideoList } from "@/api/video";
+
+export function useTable() {
+  const tableData = ref([]);
+  const searchParams = reactive({
+    videoName: "",
+    videoName2: "",
+    videoName3: "",
+  });
+
+  const currentPage = ref(1);
+  const pageSize = ref(10);
+  const total = ref(0);
+
+  const fetchTableData = async () => {
+    const params = {
+      videoName: searchParams.videoName,
+      currentPage: currentPage.value,
+      pageSize: pageSize.value,
+    };
+    const response = await getVideoList(params);
+    tableData.value = response.data.list || [];
+    total.value = response.data.total || 0;
+  };
+
+  const handlePageChange = (page: number) => {
+    currentPage.value = page;
+    fetchTableData();
+  };
+
+  return {
+    tableData,
+    searchParams,
+    currentPage,
+    pageSize,
+    total,
+    fetchTableData,
+    handlePageChange,
+  };
+}

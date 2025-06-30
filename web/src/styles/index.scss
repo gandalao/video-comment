@@ -1,0 +1,31 @@
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+}
+
+.view-container {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  height: 100%;
+  gap: 20px;
+  .view-header {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .view-main {
+    flex: 1;
+  }
+  .view-footer {
+    display: flex;
+    justify-content: center;
+  }
+}

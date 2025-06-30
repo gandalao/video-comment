@@ -4,8 +4,8 @@ const tables = {
   video: `
     CREATE TABLE IF NOT EXISTS d_video (
       id INT AUTO_INCREMENT PRIMARY KEY,
-      videoName VARCHAR(255) NOT NULL COMMENT '视频名',
-      shortDesc VARCHAR(255) NOT NULL COMMENT '简介',
+      videoName VARCHAR(255) NOT NULL COMMENT '名称',
+      shortDesc VARCHAR(255)  COMMENT '简介',
       fullDesc TEXT  COMMENT '详细介绍',
       coverUrl VARCHAR(255)  COMMENT '封面地址',
       category VARCHAR(255)  COMMENT '分类',

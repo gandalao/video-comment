@@ -4,7 +4,7 @@
  * 成功响应
  */
 function success(res, message = "操作成功", data = null, status = 200) {
-  return res.status(status).json({
+  return res.status(200).json({
     status,
     message,
     data,
@@ -15,7 +15,7 @@ function success(res, message = "操作成功", data = null, status = 200) {
  * 失败响应
  */
 function error(res, message = "操作错误", status = 500) {
-  return res.status(status).json({
+  return res.status(200).json({
     status,
     message,
   });
