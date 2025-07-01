@@ -4,8 +4,8 @@
     <div class="view-header">
       <div>
         <el-input v-model="searchParams.videoName" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
-        <el-input v-model="searchParams.videoName2" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
-        <el-input v-model="searchParams.videoName3" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
+        <el-input v-model="searchParams.actor" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
+        <el-input v-model="searchParams.category" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
         <el-button type="primary" @click="fetchData">搜索</el-button>
       </div>
       <div>
@@ -146,10 +146,10 @@ const handleRemove = (row: any) => {
       type: 'warning',
     }
   )
-    .then(() => {
-      removeVideo(row.id)
-      ElMessage.success("删除成功！")
+    .then(async () => {
+      await removeVideo(row.id)
       fetchData()
+      ElMessage.success("删除成功！")
     })
 
 }
@@ -167,11 +167,11 @@ const batchDelete = () => {
       type: 'warning',
     }
   )
-    .then(() => {
+    .then(async () => {
       const ids = multipleSelection.value.map((item: any) => item.id)
-      removeVideos({ ids })
-      ElMessage.success("删除成功！")
+      await removeVideos({ ids })
       fetchData()
+      ElMessage.success("删除成功！")
     })
 
 }

@@ -6,6 +6,7 @@ const path = require("path");
 const db = require("../../middleware/mysql.js"); // 引入数据库模块
 
 const sendResponse = require("../../utils/response.js");
+const { v4: uuidv4 } = require("uuid");
 
 router.post("/list", async (req, res) => {
   const { videoName, page = 1, pageSize = 10 } = req.body;
@@ -65,12 +66,13 @@ router.post("/add", async (req, res) => {
   try {
     const sql = `
       INSERT INTO d_video (
-        videoName, actor, shortDesc, coverUrl, category, releaseDate
-      ) VALUES (?, ?, ?, ?, ?, ?)
+        id, videoName, actor, shortDesc, coverUrl, category, releaseDate
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
     // 如果 releaseDate 为空，则插入 null
     const values = [
+      uuidv4(),
       videoName,
       actor,
       shortDesc || null,
@@ -96,7 +98,9 @@ router.post("/upload", multer.array("files"), (req, res) => {
     }
 
     // 构建访问路径（如 /uploads/时间戳-随机数.扩展名）
-    const filePaths = req.files.map((file) => `/uploads/images/${file.filename}`);
+    const filePaths = req.files.map(
+      (file) => `/uploads/images/${file.filename}`
+    );
 
     sendResponse.success(res, "上传成功", {
       url: filePaths,
@@ -183,7 +187,8 @@ router.post("/edit", async (req, res) => {
       updateFields.push("releaseDate = ?");
       values.push(releaseDate ? releaseDate : null);
     }
-
+    // 添加更新时间
+    updateFields.push("updateTime = NOW()");
     // 构建 SQL 语句
     const sql = `
       UPDATE d_video 
@@ -250,7 +255,9 @@ router.post("/batchDelete", async (req, res) => {
 
   try {
     // 构建 SQL 语句
-    const sql = `DELETE FROM d_video WHERE id IN (${ids.map(() => "?").join(",")})`;
+    const sql = `DELETE FROM d_video WHERE id IN (${ids
+      .map(() => "?")
+      .join(",")})`;
 
     // 执行删除操作
     const result = await db.query(sql, ids);

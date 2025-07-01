@@ -5,8 +5,8 @@ export function useTable() {
   const tableData = ref([]);
   const searchParams = reactive({
     videoName: "",
-    videoName2: "",
-    videoName3: "",
+    actor: "",
+    category: "",
   });
 
   const currentPage = ref(1);
