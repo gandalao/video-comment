@@ -1,20 +1,16 @@
 import { createRouter, createWebHashHistory } from "vue-router";
-
+import Layout from "../layout/index.vue";
+import menuBarRoutes from "./menuBarRoutes";
 const routes = [
   {
     path: "/",
-    redirect: "/video",
-  },
-
-  {
-    path: "/home",
-    name: "home",
-    component: () => import("../views/home/index.vue"),
+    redirect: "/home",
+    component: Layout,
+    children: menuBarRoutes,
   },
   {
-    path: "/video",
-    name: "video",
-    component: () => import("../views/video/index.vue"),
+    path: "/:pathMatch(.*)*",
+    component: () => import("@/views/404/index.vue"),
   },
 ];
 

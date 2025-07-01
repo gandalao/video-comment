@@ -111,43 +111,6 @@ router.post("/upload", multer.array("files"), (req, res) => {
   }
 });
 
-router.get("/download", async (req, res) => {
-  let sql = `SELECT * FROM d_video`;
-
-  const result = await db.query(sql);
-
-  // 检查是否查询到数据
-  if (result.length === 0) {
-    return res.status(404).json({ code: 404, message: "未找到视频数据" });
-  }
-
-  // 使用查询结果生成Markdown内容
-  const video = result[0]; // 假设只需要第一条数据
-  const mdContent = `# ${video.videoName}\n\n${video.actor}`;
-
-  // 指定文件路径
-  const filePath = path.join(__dirname, "output.md");
-
-  // 写入文件
-  fs.writeFile(filePath, mdContent, (err) => {
-    if (err) {
-      console.error("写入文件时发生错误", err);
-      return res.status(500).json({ code: 500, message: "写入文件时发生错误" });
-    } else {
-      console.log("Markdown文件已成功生成");
-      // 发送文件给前端下载
-      res.download(filePath, "video-info.md", (downloadErr) => {
-        if (downloadErr) {
-          console.error("下载文件时发生错误", downloadErr);
-          return res
-            .status(500)
-            .json({ code: 500, message: "下载文件时发生错误" });
-        }
-      });
-    }
-  });
-});
-
 // 编辑视频接口
 router.post("/edit", async (req, res) => {
   const { id, videoName, actor, shortDesc, coverUrl, category, releaseDate } =

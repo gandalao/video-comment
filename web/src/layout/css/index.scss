@@ -1,0 +1,153 @@
+/* member-layout */
+.member-layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+  /* 菜单 */
+  .member-layout-menu {
+    background-color: #001529;
+    border: none;
+    .el-sub-menu .el-menu {
+      background-color: #000000;
+    }
+    .el-sub-menu__title,
+    .el-menu-item {
+      height: 40px;
+      line-height: 40px;
+      color: rgb(255 255 255 / 65%);
+      .icon {
+        width: 24px;
+        margin-right: 5px;
+        color: rgb(255 255 255 / 65%);
+        text-align: center;
+        vertical-align: middle;
+      }
+      &:focus,
+      &:hover {
+        color: #ffffff !important;
+        background: none;
+        .icon {
+          color: #ffffff !important;
+        }
+      }
+    }
+
+    /* 选中 */
+    .is-active > .el-sub-menu__title {
+      color: #ffffff !important;
+      .icon {
+        color: #ffffff !important;
+      }
+    }
+    .el-sub-menu .el-menu-item.is-active,
+    .el-menu-item.is-active,
+    .el-sub-menu .el-menu-item.is-active svg,
+    .el-menu-item.is-active svg {
+      color: #ffffff !important;
+      background-color: #1890ff !important;
+    }
+
+    /* 子标题 */
+    .el-sub-menu__title {
+      margin-top: 4px;
+      margin-bottom: 4px;
+    }
+    .el-menu-item:not(:last-child) {
+      margin-bottom: 8px;
+    }
+
+    /* 收起 */
+    &.el-menu--collapse {
+      width: 54px;
+      .el-sub-menu__title,
+      .el-menu-item {
+        .icon {
+          position: absolute;
+          top: 10px;
+          left: 15px;
+          margin: 0;
+        }
+      }
+    }
+
+    /* 横导航模式 */
+    &.el-menu--horizontal.el-menu {
+      .el-sub-menu__title,
+      .el-menu-item {
+        height: 48px;
+        margin-top: 0;
+        margin-bottom: 0;
+        line-height: 48px;
+      }
+      .el-menu-item:not(:last-child) {
+        margin-bottom: 0;
+      }
+    }
+  }
+  /* 左侧 */
+  .member-layout-left {
+    display: flex;
+    flex: 0 0 200px;
+    background-color: #001529;
+    .member-layout-left-box {
+      display: flex;
+      flex-direction: column;
+      width: 200px;
+      .member-layout-left-logo {
+        position: relative;
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        height: 48px;
+        .logo-url {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .img {
+          width: 26px;
+        }
+        .text {
+          margin-left: 10px;
+          font-family: -apple-system, BlinkMacSystemFont, "segoe ui", Roboto,
+            "helvetica neue", Arial, "noto sans", sans-serif,
+            "apple color emoji", "segoe ui emoji", "segoe ui symbol",
+            "noto color emoji";
+          font-size: 16px;
+          font-weight: 600;
+          color: #ffffff;
+        }
+        &::after {
+          position: absolute;
+          right: 0;
+          bottom: 0;
+          left: 0;
+          height: 1px;
+          content: "";
+          background-color: rgb(60 60 60 / 12%);
+        }
+      }
+      .member-layout-left-menu {
+        flex: 1;
+      }
+      &.fixed {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        .member-layout-left-menu {
+          overflow: hidden auto;
+        }
+      }
+    }
+
+    /* 左侧收起 */
+    &.collapsed {
+      flex: 0 0 54px;
+      .member-layout-left-box {
+        width: 54px;
+      }
+    }
+  }
+}

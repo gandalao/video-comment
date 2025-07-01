@@ -4,13 +4,15 @@
     <div class="view-header">
       <div>
         <el-input v-model="searchParams.videoName" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
-        <el-input v-model="searchParams.actor" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
-        <el-input v-model="searchParams.category" placeholder="输入视频名称搜索" style="width: 300px; margin-right: 10px;" />
+        <el-input v-model="searchParams.actor" placeholder="输入主演搜索" style="width: 300px; margin-right: 10px;" />
+        <el-input v-model="searchParams.category" placeholder="输入分类搜索" style="width: 300px; margin-right: 10px;" />
         <el-button type="primary" @click="fetchData">搜索</el-button>
       </div>
       <div>
-        <el-button type="success" @click="showDialog">添加视频</el-button>
+        <el-button type="primary" @click="showDialog">添加视频</el-button>
         <el-button type="danger" @click="batchDelete">批量删除</el-button>
+        <el-button type="success" @click="exportDoc">生成文档</el-button>
+        <el-button type="warning" @click="batchAdd">批量添加</el-button>
       </div>
     </div>
 
@@ -36,7 +38,7 @@
 
     <!-- 分页 -->
     <div class="view-footer">
-      <el-pagination layout="prev, pager, next" :total="total" :page-size="pageSize" v-model:current-page="currentPage"
+      <el-pagination background  layout="prev, pager, next" :total="total" :page-size="pageSize" v-model:current-page="currentPage"
         @current-change="handlePageChange" />
     </div>
   </div>
@@ -93,9 +95,9 @@ import { ref, onMounted } from 'vue';
 import { useTable } from "./useTable";
 import { useForm } from "./useForm";
 import { Delete, Plus } from '@element-plus/icons-vue'
-import { removeVideo, removeVideos } from "@/api/video";
+import { removeVideo, removeVideos, exportVideoInfo, addVideo } from "@/api/video";
 import { ElMessage, ElMessageBox } from 'element-plus';
-
+import dataset from './dataset';
 
 const {
   tableData,
@@ -178,6 +180,22 @@ const batchDelete = () => {
 
 const removeFile = (file: any) => {
   fileList.value = fileList.value.filter((item: any) => item.name !== file.name)
+}
+
+const exportDoc = () => {
+  exportVideoInfo()
+}
+
+const batchAdd = async () => {
+  const params = dataset.map((item: any) => {
+    item.coverUrl = "/" + item.videoName + ".png"
+    return item
+  })
+  params.forEach(async (item: any) => {
+    await addVideo(item)
+  })
+  fetchData()
+
 }
 
 // 初始化加载数据

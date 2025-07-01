@@ -1,8 +1,4 @@
-* {
-  padding: 0;
-  margin: 0;
-  box-sizing: border-box;
-}
+@import "./normalize.css";
 
 html,
 body,
@@ -10,10 +6,22 @@ body,
   height: 100%;
 }
 
+a {
+  text-decoration: none;
+  cursor: pointer;
+  background-color: transparent;
+  outline: none;
+  &:active,
+  &:hover {
+    text-decoration: none;
+    outline: 0;
+  }
+}
+
 .view-container {
   display: flex;
   flex-direction: column;
-  padding: 20px;
+  // padding: 20px;
   height: 100%;
   gap: 20px;
   .view-header {
@@ -29,3 +37,4 @@ body,
     justify-content: center;
   }
 }
+

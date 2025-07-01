@@ -44,3 +44,8 @@ export function upload(data: any) {
     },
   });
 }
+
+
+export function exportVideoInfo() {
+  return service.get("/docs/download");
+}
