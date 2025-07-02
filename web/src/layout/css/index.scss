@@ -1,12 +1,34 @@
+:root {
+  // 白天模式
+  color-scheme: light;
+
+  // 框架 - 左边宽度
+  --ft-mb-layout-left-side-width: 220px;
+  --ft-mb-layout-left-side-collapsed-width: 54px;
+}
+
 /* member-layout */
 .member-layout {
   display: flex;
   flex-direction: row;
   min-height: 100vh;
+
+  .member-layout-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03),
+      0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+    .member-layout-header-left {
+      display: flex;
+      cursor: pointer;
+    }
+  }
   /* 菜单 */
   .member-layout-menu {
     background-color: #001529;
     border: none;
+    
     .el-sub-menu .el-menu {
       background-color: #000000;
     }
@@ -14,6 +36,7 @@
     .el-menu-item {
       height: 40px;
       line-height: 40px;
+      margin-bottom: 5px;
       color: rgb(255 255 255 / 65%);
       .icon {
         width: 24px;
@@ -45,6 +68,7 @@
     .el-menu-item.is-active svg {
       color: #ffffff !important;
       background-color: #1890ff !important;
+      border-radius: 5px;
     }
 
     /* 子标题 */
@@ -87,12 +111,14 @@
   /* 左侧 */
   .member-layout-left {
     display: flex;
-    flex: 0 0 200px;
+    flex: 0 0 var(--ft-mb-layout-left-side-width);
     background-color: #001529;
+    transition: all 0.2s ease;
     .member-layout-left-box {
       display: flex;
       flex-direction: column;
-      width: 200px;
+      width: var(--ft-mb-layout-left-side-width);
+      transition: all 0.2s ease;
       .member-layout-left-logo {
         position: relative;
         display: flex;
@@ -117,6 +143,7 @@
           font-size: 16px;
           font-weight: 600;
           color: #ffffff;
+          animation: showup 0.2s linear forwards;
         }
         &::after {
           position: absolute;
@@ -149,5 +176,16 @@
         width: 54px;
       }
     }
+  }
+}
+
+@keyframes showup {
+  0% {
+    filter: blur(2px);
+    letter-spacing: -10px;
+  }
+  100% {
+    filter: blur(0);
+    letter-spacing: 0px;
   }
 }

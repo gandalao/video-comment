@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { House } from '@element-plus/icons-vue'
+import { HomeFilled,Menu } from '@element-plus/icons-vue'
 
 const iconsMap = {
-  House,
+  HomeFilled,
+  Menu
 }
 
 const props = defineProps({

@@ -2,7 +2,7 @@ const routes = [
   {
     meta: {
       title: "首页",
-      icon: "House",
+      icon: "HomeFilled",
     },
     path: "home",
     name: "Home",
@@ -11,7 +11,7 @@ const routes = [
   {
     meta: {
       title: "视频管理",
-      icon: "House",
+      icon: "Menu",
     },
     path: "/video",
     children: [

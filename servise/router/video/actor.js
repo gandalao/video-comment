@@ -8,18 +8,18 @@ const sendResponse = require("../../utils/response.js");
 const { v4: uuidv4 } = require("uuid");
 
 router.post("/list", async (req, res) => {
-  const { videoName, page = 1, pageSize = 10 } = req.body;
+  const { actorName, page = 1, pageSize = 10 } = req.body;
 
   try {
     // 构建查询语句
-    let sql = `SELECT * FROM d_video`;
-    let countSql = `SELECT COUNT(*) AS total FROM d_video`;
+    let sql = `SELECT * FROM d_actor`;
+    let countSql = `SELECT COUNT(*) AS total FROM d_actor`;
     const params = [];
 
-    if (videoName) {
-      sql += ` WHERE videoName LIKE ?`;
-      countSql += ` WHERE videoName LIKE ?`;
-      params.push(`%${videoName}%`);
+    if (actorName) {
+      sql += ` WHERE actorName LIKE ?`;
+      countSql += ` WHERE actorName LIKE ?`;
+      params.push(`%${actorName}%`);
     }
 
     // 添加分页
@@ -34,16 +34,16 @@ router.post("/list", async (req, res) => {
 
     const total = countResult[0].total;
 
-    // 格式化 releaseDate 字段为 YYYY-MM-DD
-    const formattedResults = results.map((video) => {
-      if (video.releaseDate) {
-        const date = new Date(video.releaseDate);
-        video.releaseDate = date.toISOString().split("T")[0]; // 转换为 YYYY-MM-DD
+    // 格式化 birth 字段为 YYYY-MM-DD
+    const formattedResults = results.map((actor) => {
+      if (actor.birth) {
+        const date = new Date(actor.birth);
+        actor.birth = date.toISOString().split("T")[0]; // 转换为 YYYY-MM-DD
       }
-      return video;
+      return actor;
     });
 
-    sendResponse.success(res, "获取视频列表成功", {
+    sendResponse.success(res, "获取演员列表成功", {
       list: formattedResults,
       total,
     });
@@ -54,34 +54,33 @@ router.post("/list", async (req, res) => {
 });
 
 router.post("/add", async (req, res) => {
-  const { videoName, actor, shortDesc, coverUrl, category, releaseDate } =
-    req.body;
+  const { actorName, gender, birth, nationality, avatarUrl, introduce } = req.body;
 
   // 参数校验（基础检查）
-  if (!videoName || !actor) {
+  if (!actorName) {
     return sendResponse.error(res, "缺少必填参数");
   }
 
   try {
     const sql = `
-      INSERT INTO d_video (
-        id, videoName, actor, shortDesc, coverUrl, category, releaseDate
+      INSERT INTO d_actor (
+        id, actorName, gender, birth, nationality, avatarUrl, introduce
       ) VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    // 如果 releaseDate 为空，则插入 null
+    // 如果 birth 为空，则插入 null
     const values = [
       uuidv4(),
-      videoName,
-      actor,
-      shortDesc || null,
-      coverUrl || null,
-      category || null,
-      releaseDate ? releaseDate : null,
+      actorName,
+      gender || null,
+      birth ? birth : null,
+      nationality || null,
+      avatarUrl || null,
+      introduce || null,
     ];
 
     const result = await db.query(sql, values);
-    sendResponse.success(res, "视频添加成功", result);
+    sendResponse.success(res, "演员添加成功", result);
   } catch (err) {
     sendResponse.error(res, "服务器内部错误");
   }
@@ -89,11 +88,10 @@ router.post("/add", async (req, res) => {
 
 // 编辑接口
 router.post("/edit", async (req, res) => {
-  const { id, videoName, actor, shortDesc, coverUrl, category, releaseDate } =
-    req.body;
+  const { id, actorName, gender, birth, nationality, avatarUrl, introduce } = req.body;
 
   // 参数校验
-  if (!id || !videoName || !actor) {
+  if (!id || !actorName) {
     return sendResponse.error(res, "缺少必要参数");
   }
 
@@ -102,35 +100,35 @@ router.post("/edit", async (req, res) => {
     const updateFields = [];
     const values = [];
 
-    if (videoName) {
-      updateFields.push("videoName = ?");
-      values.push(videoName);
+    if (actorName) {
+      updateFields.push("actorName = ?");
+      values.push(actorName);
     }
-    if (actor) {
-      updateFields.push("actor = ?");
-      values.push(actor);
+    if (gender !== undefined) {
+      updateFields.push("gender = ?");
+      values.push(gender || null);
     }
-    if (shortDesc !== undefined) {
-      updateFields.push("shortDesc = ?");
-      values.push(shortDesc || null);
+    if (birth !== undefined) {
+      updateFields.push("birth = ?");
+      values.push(birth ? birth : null);
     }
-    if (coverUrl !== undefined) {
-      updateFields.push("coverUrl = ?");
-      values.push(coverUrl || null);
+    if (nationality !== undefined) {
+      updateFields.push("nationality = ?");
+      values.push(nationality || null);
     }
-    if (category !== undefined) {
-      updateFields.push("category = ?");
-      values.push(category || null);
+    if (avatarUrl !== undefined) {
+      updateFields.push("avatarUrl = ?");
+      values.push(avatarUrl || null);
     }
-    if (releaseDate !== undefined) {
-      updateFields.push("releaseDate = ?");
-      values.push(releaseDate ? releaseDate : null);
+    if (introduce !== undefined) {
+      updateFields.push("introduce = ?");
+      values.push(introduce || null);
     }
     // 添加更新时间
     updateFields.push("updateTime = NOW()");
     // 构建 SQL 语句
     const sql = `
-      UPDATE d_video 
+      UPDATE d_actor 
       SET ${updateFields.join(", ")}
       WHERE id = ?
     `;
@@ -141,14 +139,14 @@ router.post("/edit", async (req, res) => {
 
     // 检查是否成功更新记录
     if (result.affectedRows === 0) {
-      return sendResponse.error(res, "未找到要更新的视频");
+      return sendResponse.error(res, "未找到要更新的演员");
     }
 
-    sendResponse.success(res, "视频更新成功", {
+    sendResponse.success(res, "演员更新成功", {
       id: parseInt(id),
     });
   } catch (err) {
-    console.error("视频更新失败:", err);
+    console.error("演员更新失败:", err);
     sendResponse.error(res, "服务器内部错误");
   }
 });
@@ -164,21 +162,21 @@ router.delete("/delete/:id", async (req, res) => {
 
   try {
     // 构建 SQL 语句
-    const sql = `DELETE FROM d_video WHERE id = ?`;
+    const sql = `DELETE FROM d_actor WHERE id = ?`;
 
     // 执行删除操作
     const result = await db.query(sql, [id]);
 
     // 检查是否成功删除记录
     if (result.affectedRows === 0) {
-      return sendResponse.error(res, "未找到要删除的视频");
+      return sendResponse.error(res, "未找到要删除的演员");
     }
 
-    sendResponse.success(res, "视频删除成功", {
+    sendResponse.success(res, "演员删除成功", {
       id: parseInt(id),
     });
   } catch (err) {
-    console.error("视频删除失败:", err);
+    console.error("演员删除失败:", err);
     sendResponse.error(res, "服务器内部错误");
   }
 });
@@ -194,7 +192,7 @@ router.post("/batchDelete", async (req, res) => {
 
   try {
     // 构建 SQL 语句
-    const sql = `DELETE FROM d_video WHERE id IN (${ids
+    const sql = `DELETE FROM d_actor WHERE id IN (${ids
       .map(() => "?")
       .join(",")})`;
 
@@ -203,14 +201,14 @@ router.post("/batchDelete", async (req, res) => {
 
     // 检查是否成功删除记录
     if (result.affectedRows === 0) {
-      return sendResponse.error(res, "未找到要删除的视频");
+      return sendResponse.error(res, "未找到要删除的演员");
     }
 
-    sendResponse.success(res, "视频批量删除成功", {
+    sendResponse.success(res, "演员批量删除成功", {
       count: result.affectedRows,
     });
   } catch (err) {
-    console.error("视频批量删除失败:", err);
+    console.error("演员批量删除失败:", err);
     sendResponse.error(res, "服务器内部错误");
   }
 });

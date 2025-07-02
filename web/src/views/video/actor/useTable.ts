@@ -1,12 +1,10 @@
 import { ref, reactive } from "vue";
-import { getVideoData } from "@/api/video";
+import { getActorData } from "@/api/actor";
 
 export function useTable() {
   const tableData = ref([]);
   const searchParams = reactive({
-    videoName: "",
-    actor: "",
-    category: "",
+    actorName: "",
   });
 
   const currentPage = ref(1);
@@ -15,11 +13,11 @@ export function useTable() {
 
   const fetchData = async () => {
     const params = {
-      videoName: searchParams.videoName,
+      actorName: searchParams.actorName,
       page: currentPage.value,
       pageSize: pageSize.value,
     };
-    const response = await getVideoData(params);
+    const response = await getActorData(params);
     tableData.value = response.data.list || [];
     total.value = response.data.total || 0;
   };

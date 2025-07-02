@@ -1,6 +1,6 @@
 import service from "../utils/axios";
 
-export function getVideoList(data: any) {
+export function getVideoData(data: any) {
   return service({
     url: "/video/list",
     method: "post",
@@ -8,25 +8,25 @@ export function getVideoList(data: any) {
   });
 }
 
-export function addVideo(data: any) {
+export function addVideoData(data: any) {
   return service({
     url: "/video/add",
     method: "post",
     data,
   });
 }
-export function editVideo(data: any) {
+export function editVideoData(data: any) {
   return service({
     url: "/video/edit",
     method: "post",
     data,
   });
 }
-export function removeVideo(id: string) {
+export function removeVideoData(id: string) {
   return service.delete("/video/delete/" + id);
 }
 
-export function removeVideos(data: any) {
+export function batchRemoveVideoData(data: any) {
   return service({
     url: "/video/batchDelete",
     method: "post",
@@ -35,17 +35,21 @@ export function removeVideos(data: any) {
 }
 
 export function upload(data: any) {
+  let headers = {};
+  if (!data?.imageUrl) {
+    headers = {
+      "Content-Type": "multipart/form-data",
+    };
+  }
+
   return service({
     url: "/video/upload",
     method: "post",
     data,
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
+    headers,
   });
 }
 
-
 export function exportVideoInfo() {
-  return service.get("/docs/download");
+  return service.get("/video/download");
 }

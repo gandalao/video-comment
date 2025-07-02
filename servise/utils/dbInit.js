@@ -22,6 +22,19 @@ const tables = {
       createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间'
     )
   `,
+  actor: `
+    CREATE TABLE IF NOT EXISTS d_actor (
+      id VARCHAR(255) PRIMARY KEY COMMENT '序号',
+      actorName VARCHAR(255) NOT NULL COMMENT '姓名',
+      gender VARCHAR(255)  COMMENT '性别',
+      birth DATE  COMMENT '出生日期',
+      nationality VARCHAR(255)  COMMENT '国籍',
+      avatarUrl VARCHAR(255)  COMMENT '头像',
+      introduce TEXT  COMMENT '介绍',
+      updateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
+      createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间'
+    )
+  `,
 };
 
 async function initializeTables() {

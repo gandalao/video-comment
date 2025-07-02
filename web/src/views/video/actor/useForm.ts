@@ -1,6 +1,7 @@
 // useForm.ts
 import { reactive, ref } from "vue";
-import { addVideoData, editVideoData, upload } from "@/api/video";
+import { addActorData, editActorData } from "@/api/actor";
+import { upload } from "@/api/video";
 import {
   ElMessage,
   type UploadFile,
@@ -10,18 +11,16 @@ import {
 } from "element-plus";
 export function useForm(refreshData: () => void) {
   const formData = ref({
-    videoName: "",
-    actor: "",
-    shortDesc: "",
-    coverUrl: "",
-    category: "",
-    releaseDate: "",
+    actorName: "",
+    gender: "",
+    avatarUrl: "",
+    birth: "",
     imageUrl: "",
   });
 
   const formDataRef = ref();
   const formRules = {
-    videoName: [{ required: true, message: "请输入视频名称", trigger: "blur" }],
+    actorName: [{ required: true, message: "请输入姓名", trigger: "blur" }],
   };
 
   const addDialogVisible = ref(false);
@@ -59,9 +58,9 @@ export function useForm(refreshData: () => void) {
         if (valid) {
           try {
             if (isEdit.value) {
-              await editVideoData(formData.value);
+              await editActorData(formData.value);
             } else {
-              await addVideoData(formData.value);
+              await addActorData(formData.value);
             }
             ElMessage.success("操作成功");
             closeDialog();
@@ -87,7 +86,7 @@ export function useForm(refreshData: () => void) {
     const file = uploadFile.raw as File;
     if (!file) return;
 
-    const fileName = formData.value.videoName || "default";
+    const fileName = formData.value.actorName || "default";
     const ext = file.name.substring(file.name.lastIndexOf("."));
     const newName = `${fileName}${ext}`;
 
@@ -96,7 +95,7 @@ export function useForm(refreshData: () => void) {
 
     try {
       const res = await upload(formDataParam);
-      formData.value.coverUrl = res.data.url;
+      formData.value.avatarUrl = res.data.url;
     } catch (error) {
       console.error("上传错误:", error);
     }

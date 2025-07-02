@@ -38,8 +38,8 @@
 
     <!-- 分页 -->
     <div class="view-footer">
-      <el-pagination background  layout="prev, pager, next" :total="total" :page-size="pageSize" v-model:current-page="currentPage"
-        @current-change="handlePageChange" />
+      <el-pagination background layout="prev, pager, next" :total="total" :page-size="pageSize"
+        v-model:current-page="currentPage" @current-change="handlePageChange" />
     </div>
   </div>
 
@@ -55,26 +55,31 @@
       <el-form-item label="简介" prop="shortDesc">
         <el-input v-model="formData.shortDesc" />
       </el-form-item>
-      <el-form-item label="封面" prop="coverUrl">
-        <el-upload action="" :limit="1" list-type="picture-card" accept=".pdf,.gif,.jpg,.png" :on-change="fileChange"
-          :auto-upload="false" v-model:file-list="fileList">
-          <el-icon>
-            <Plus />
-          </el-icon>
-
-          <template #file="{ file }">
-            <div>
-              <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
-              <span class="el-upload-list__item-actions">
-                <span class="el-upload-list__item-delete" @click="removeFile(file)">
-                  <el-icon>
-                    <Delete />
-                  </el-icon>
+      <el-form-item label="封面">
+        <div style="width: 100%;">
+          <div style="display: flex; align-items: center; gap: 10px;margin-bottom: 10px;">
+            <el-input placeholder="输入图片链接上传" v-model="formData.imageUrl" style="width: 100%;"></el-input>
+            <el-button type="primary" @click="submitForm(formDataRef, 'imageUpload')">上传</el-button>
+          </div>
+          <el-upload action="" :limit="1" list-type="picture-card" accept=".pdf,.gif,.jpg,.png" :on-change="fileChange"
+            :auto-upload="false" v-model:file-list="fileList" :disabled="fileList.length > 0">
+            <el-icon>
+              <Plus />
+            </el-icon>
+            <template #file="{ file }">
+              <div>
+                <img class="el-upload-list__item-thumbnail" :src="file.url" alt="" />
+                <span class="el-upload-list__item-actions">
+                  <span class="el-upload-list__item-delete" @click="removeFile(file)">
+                    <el-icon>
+                      <Delete />
+                    </el-icon>
+                  </span>
                 </span>
-              </span>
-            </div>
-          </template>
-        </el-upload>
+              </div>
+            </template>
+          </el-upload>
+        </div>
       </el-form-item>
       <el-form-item label="类型" prop="category">
         <el-input v-model="formData.category" />
@@ -95,7 +100,7 @@ import { ref, onMounted } from 'vue';
 import { useTable } from "./useTable";
 import { useForm } from "./useForm";
 import { Delete, Plus } from '@element-plus/icons-vue'
-import { removeVideo, removeVideos, exportVideoInfo, addVideo } from "@/api/video";
+import { removeVideoData, batchRemoveVideoData, exportVideoInfo, addVideoData, upload } from "@/api/video";
 import { ElMessage, ElMessageBox } from 'element-plus';
 import dataset from './dataset';
 
@@ -118,7 +123,7 @@ const {
   submitForm,
   closeDialog,
   fileList,
-  fileChange
+  fileChange,
 } = useForm(fetchData);
 
 const selectable = (row: any) => ![1, 2].includes(row.id)
@@ -149,7 +154,7 @@ const handleRemove = (row: any) => {
     }
   )
     .then(async () => {
-      await removeVideo(row.id)
+      await removeVideoData(row.id)
       fetchData()
       ElMessage.success("删除成功！")
     })
@@ -171,7 +176,7 @@ const batchDelete = () => {
   )
     .then(async () => {
       const ids = multipleSelection.value.map((item: any) => item.id)
-      await removeVideos({ ids })
+      await batchRemoveVideoData({ ids })
       fetchData()
       ElMessage.success("删除成功！")
     })
@@ -192,7 +197,7 @@ const batchAdd = async () => {
     return item
   })
   params.forEach(async (item: any) => {
-    await addVideo(item)
+    await addVideoData(item)
   })
   fetchData()
 
