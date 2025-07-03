@@ -43,11 +43,12 @@
     <div class="view-main">
       <el-table :data="tableData" @selection-change="handleSelectionChange" border style="height:100%;width: 100%">
         <el-table-column type="selection" :selectable="selectable" width="55" />
-        <el-table-column fixed prop="videoName" label="名称" width="160"></el-table-column>
+        <el-table-column fixed prop="videoName" label="名称" width="120"></el-table-column>
+        <el-table-column prop="releaseDate" label="发行日期" width="140"></el-table-column>
         <el-table-column prop="actor" label="主演" width="240"></el-table-column>
         <el-table-column prop="shortDesc" label="简介"></el-table-column>
         <el-table-column prop="series" label="系列" width="280"></el-table-column>
-        <el-table-column prop="releaseDate" label="发行日期" width="160"></el-table-column>
+
         <el-table-column width="200">
           <template #header>
             <span>更多</span>
@@ -66,7 +67,7 @@
               <el-tag type="info" size="small" round v-else>
                 {{ scope.row.videoType }}
               </el-tag>
-              <el-tag type="success" size="small" round v-if="scope.row.subtitle != '外挂字幕'">
+              <el-tag type="danger" size="small" round v-if="scope.row.subtitle != '外挂字幕'">
                 {{ scope.row.subtitle }}
               </el-tag>
               <el-tag type="info" size="small" round v-else>

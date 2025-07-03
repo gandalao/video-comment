@@ -95,12 +95,12 @@
 
 
       <el-form-item label="身高" prop="height">
-        <el-input-number v-model="formData.height">
+        <el-input v-model="formData.height"  @input="value => formData.height = value.replace(/[^0-9]/g, '')">
           <template #append>cm</template>
-        </el-input-number>
+        </el-input>
       </el-form-item>
       <el-form-item label="介绍" prop="introduce">
-        <el-input v-model="textarea" :rows="4" type="textarea" />
+        <el-input v-model="formData.introduce" :rows="4" type="textarea" />
       </el-form-item>
       <el-form-item label-width="0">
         <div style="width: 100%;display: flex;justify-content: center;gap: 20px;">

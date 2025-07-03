@@ -134,7 +134,7 @@ async function generateMarkdownContent(db, actorMap, sortedGroupedResult) {
     }
 
     // 👇 构建演员标题
-    let actorTitle = `## ${actor}`;
+    let actorTitle = `### ${actor}`;
     if (formattedBirthday) {
       actorTitle += `  | ${formattedBirthday}`;
     }
@@ -151,7 +151,7 @@ async function generateMarkdownContent(db, actorMap, sortedGroupedResult) {
 
     // 👇 使用排序后的 videos
     sortedVideos.forEach((video) => {
-      let title = `### ${video.videoName}`;
+      let title = `#### ${video.videoName}`;
       // 如果是“多人合作”，则添加是几人共演
       if (actor === "多人合作" && video.actor) {
         title += `    ${video.actor.split("、").length}人合作`;
@@ -191,10 +191,10 @@ async function generateMarkdownContent(db, actorMap, sortedGroupedResult) {
         mdContent += `${formattedReleaseDate}\n\n`;
       }
 
-      mdContent += `${video.shortDesc}\n`;
-      mdContent += `<img src=".${video.coverUrl}" width="800px" height="auto" />\n\n\n\n\n\n\n\n`;
+      mdContent += `${video.shortDesc}\n\n`;
+      mdContent += `<img src=".${video.coverUrl}" width="800px" height="auto" />\n\n\n\n\n\n`;
     });
-    mdContent += "\n\n\n\n\n\n\n\n\n\n\n";
+    mdContent += "\n\n\n\n\n\n\n\n\n";
   }
 
   return mdContent;

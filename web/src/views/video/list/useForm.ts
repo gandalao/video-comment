@@ -52,9 +52,7 @@ export function useForm(refreshData: () => void) {
 
   const closeDialog = () => {
     addDialogVisible.value = false;
-    if (formDataRef.value) {
-      formDataRef.value.resetFields();
-    }
+    formDataRef.value.resetFields();
     fileList.value = [];
     isEdit.value = false;
   };

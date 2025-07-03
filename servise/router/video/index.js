@@ -95,6 +95,12 @@ router.post("/add", async (req, res) => {
   }
 
   try {
+    // 检查 videoName 是否已存在
+    const existingVideo = await db.query('SELECT * FROM d_video WHERE videoName = ?', [videoName]);
+    if (existingVideo.length > 0) {
+      return sendResponse.error(res, "视频名称[" + videoName + "]已存在");
+    }
+
     const sql = `
       INSERT INTO d_video (
         id, videoName, actor, shortDesc, coverUrl, category, releaseDate,series,subtitle,resolution,videoType
