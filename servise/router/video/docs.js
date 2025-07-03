@@ -94,7 +94,7 @@ async function generateAndWriteDoc(db, res) {
   );
 
   // 写入文件
-  const filePath = path.join(__dirname, "../../uploads/output.md");
+  const filePath = path.join(__dirname, "../../uploads/videoDoc.md");
   await new Promise((resolve, reject) => {
     fs.writeFile(filePath, mdContent, (err) => {
       if (err) reject(err);
@@ -207,12 +207,12 @@ router.get("/download", async (req, res) => {
   const uploadsDir = path.join(__dirname, "../../uploads/");
   const zipFilePath = path.join(uploadsDir, "../videoDoc.zip");
 
-  const output = fs.createWriteStream(zipFilePath);
+  const videoDoc = fs.createWriteStream(zipFilePath);
   const archive = archiver("zip", {
     zlib: { level: 9 }, // 设置压缩等级
   });
 
-  output.on("close", function () {
+  videoDoc.on("close", function () {
     // 文件打包完成后发送给前端下载
     res.header("Content-Type", "application/zip");
     res.header("Content-Disposition", `attachment; filename=videoDoc.zip`);
@@ -232,14 +232,14 @@ router.get("/download", async (req, res) => {
     return sendResponse.error(res, "打包失败：" + err.message);
   });
 
-  archive.pipe(output);
+  archive.pipe(videoDoc);
 
   // 添加 uploads 目录下的所有文件到 zip 中
   archive.directory(uploadsDir, false); // 第二个参数为 true 表示加目录前缀
   archive.finalize();
 });
 
-// 新增接口：仅下载 output.md 文件
+// 新增接口：仅下载 videoDoc.md 文件
 router.get("/download-doc", async (req, res) => {
   try {
     // 👇 先生成或更新一次文档
@@ -247,7 +247,7 @@ router.get("/download-doc", async (req, res) => {
 
     // 👇 设置响应头，触发浏览器下载
     res.header("Content-Type", "text/markdown; charset=utf-8");
-    res.header("Content-Disposition", `attachment; filename=output.md`);
+    res.header("Content-Disposition", `attachment; filename=videoDoc.md`);
 
     // 👇 创建文件读取流并返回给前端
     const readStream = fs.createReadStream(filePath);
