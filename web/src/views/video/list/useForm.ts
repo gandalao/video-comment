@@ -9,19 +9,35 @@ import {
   type FormInstance,
 } from "element-plus";
 export function useForm(refreshData: () => void) {
+  // 日期格式化函数
+  function formatDate(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从0开始
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+
   const formData = ref({
-    videoName: "",
-    actor: "",
-    shortDesc: "",
-    coverUrl: "",
-    category: "",
-    releaseDate: "",
+    videoName: "", // 视频名称
+    actor: "", // 演员
+    shortDesc: "", //简介
+    coverUrl: "", //封面
+    category: "", //分类
+    series: "", //系列
+    resolution: "1080p", //分辨率
+    releaseDate: formatDate(new Date()), //上映时间
+    subtitle: "外挂字幕", //字幕
+    videoType: "有码", //类型
+    actorList: [],
     imageUrl: "",
   });
 
   const formDataRef = ref();
   const formRules = {
     videoName: [{ required: true, message: "请输入视频名称", trigger: "blur" }],
+    actorList: [
+      { required: true, message: "请选择或输入演员", trigger: "blur" },
+    ],
   };
 
   const addDialogVisible = ref(false);
@@ -43,6 +59,7 @@ export function useForm(refreshData: () => void) {
     isEdit.value = false;
   };
   const submitForm = async (formEl: FormInstance | undefined, type: string) => {
+    // 上传图片
     if (type == "imageUpload") {
       let imageUrl = formData.value.imageUrl;
       if (imageUrl) {
@@ -54,10 +71,12 @@ export function useForm(refreshData: () => void) {
         fileList.value = [list];
       }
     } else {
+      // 提交表单
       if (!formEl) return;
       await formEl.validate(async (valid, fields) => {
         if (valid) {
           try {
+            formData.value.actor = formData.value.actorList.join("、");
             if (isEdit.value) {
               await editVideoData(formData.value);
             } else {

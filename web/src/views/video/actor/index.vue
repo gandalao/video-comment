@@ -18,7 +18,17 @@
         <el-table-column type="selection" :selectable="selectable" width="55" />
         <el-table-column prop="actorName" label="姓名"></el-table-column>
         <el-table-column prop="gender" label="性别"></el-table-column>
-        <el-table-column prop="birth" label="出生日期"></el-table-column>
+        <el-table-column label="年龄">
+          <template #default="scope">
+            {{ calculateAge(scope.row.birthday) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="height" label="身高">
+          <template #default="scope">
+            <span v-if="scope.row.height">{{ scope.row.height }}cm</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="birthday" label="出生日期"></el-table-column>
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button link type="primary" size="small" @click="handleEdit(scope.row)">
@@ -38,20 +48,29 @@
   </div>
 
   <!-- 添加对话框 -->
-  <el-dialog v-model="addDialogVisible" title="添加视频" :close-on-click-modal="false" @close="closeDialog">
+  <el-dialog v-model="addDialogVisible" title="添加演员" :close-on-click-modal="false" @close="closeDialog" align-center>
     <el-form :model="formData" label-width="100px" :rules="formRules" ref="formDataRef">
       <el-form-item label="姓名" prop="actorName">
         <el-input v-model="formData.actorName" />
       </el-form-item>
+      <el-form-item label="日文姓名" prop="actorNameJp">
+        <el-input v-model="formData.actorNameJp" />
+      </el-form-item>
+      <el-form-item label="出生日期" prop="birthday">
+        <el-date-picker v-model="formData.birthday" type="date" value-format="YYYY-MM-DD" />
+      </el-form-item>
       <el-form-item label="性别" prop="gender">
-        <el-input v-model="formData.gender" />
+        <el-select v-model="formData.gender" placeholder="请选择">
+          <el-option label="女" value="女" />
+          <el-option label="男" value="男" />
+        </el-select>
       </el-form-item>
 
       <el-form-item label="头像">
         <div style="width: 100%;">
           <div style="display: flex; align-items: center; gap: 10px;margin-bottom: 10px;">
             <el-input placeholder="输入图片链接上传" v-model="formData.imageUrl" style="width: 100%;"></el-input>
-            <el-button type="primary" @click="submitForm(formDataRef, 'imageUpload')">上传</el-button>
+            <el-button type="success" @click="submitForm(formDataRef, 'imageUpload')">上 传</el-button>
           </div>
           <el-upload action="" :limit="1" list-type="picture-card" accept=".pdf,.gif,.jpg,.png" :on-change="fileChange"
             :auto-upload="false" v-model:file-list="fileList" :disabled="fileList.length > 0">
@@ -74,12 +93,20 @@
         </div>
       </el-form-item>
 
-      <el-form-item label="出生日期" prop="birth">
-        <el-date-picker v-model="formData.birth" type="date" value-format="YYYY-MM-DD" />
+
+      <el-form-item label="身高" prop="height">
+        <el-input-number v-model="formData.height">
+          <template #append>cm</template>
+        </el-input-number>
       </el-form-item>
-      <el-form-item>
-        <el-button @click="closeDialog">取消</el-button>
-        <el-button type="primary" @click="submitForm(formDataRef)">提交</el-button>
+      <el-form-item label="介绍" prop="introduce">
+        <el-input v-model="textarea" :rows="4" type="textarea" />
+      </el-form-item>
+      <el-form-item label-width="0">
+        <div style="width: 100%;display: flex;justify-content: center;gap: 20px;">
+          <el-button style="width: 120px;" @click="closeDialog">取 消</el-button>
+          <el-button style="width: 120px;" type="primary" @click="submitForm(formDataRef)">提 交</el-button>
+        </div>
       </el-form-item>
     </el-form>
   </el-dialog>
@@ -176,11 +203,33 @@ const removeFile = (file: any) => {
   fileList.value = fileList.value.filter((item: any) => item.name !== file.name)
 }
 
+const isValidDate = (date: Date): boolean => {
+  return date.toString() !== 'Invalid Date' && !isNaN(date.getTime());
+};
 
+const calculateAge = (birthday: string): number => {
+  const birthDate = new Date(birthday);
+
+  if (!isValidDate(birthDate)) {
+    throw new Error(`Invalid birthday format: ${birthday}`);
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+
+  return age;
+};
 
 // 初始化加载数据
 onMounted(() => {
   fetchData();
+  console.log(calculateAge("2000-01-01"));
+
 });
 
 </script>

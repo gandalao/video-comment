@@ -22,7 +22,7 @@ router.post("/uploads", multer.array("files"), (req, res) => {
 
     // 构建访问路径（如 /uploads/时间戳-随机数.扩展名）
     const filePaths = req.files.map(
-      (file) => `/uploads/images/${file.filename}`
+      (file) => `/images/${file.filename}`
     );
 
     sendResponse.success(res, "上传成功", {
@@ -56,7 +56,7 @@ router.post("/uploads", multer.array("files"), (req, res) => {
 // 添加或修改 upload 接口以支持 imageUrl 下载
 router.post("/upload", multer.single("file"), async (req, res) => {
   try {
-    const { imageUrl } = req.body;
+    const { imageUrl,filename } = req.body;
 
     let filePath = '';
     let publicPath = '';
@@ -64,7 +64,10 @@ router.post("/upload", multer.single("file"), async (req, res) => {
     if (imageUrl) {
       // 下载远程图片
       const response = await axios.get(imageUrl, { responseType: 'stream' });
-      const filename = path.basename(imageUrl);
+      if(!filename){
+        filename = path.basename(imageUrl);
+      }
+      
       filePath = path.join(__dirname, '../../uploads/images', filename);
       publicPath = `/uploads/images/${filename}`;
 
@@ -77,7 +80,7 @@ router.post("/upload", multer.single("file"), async (req, res) => {
       });
     } else if (req.file) {
       // 使用上传的文件
-      filePath = `/uploads/images/${req.file.filename}`;
+      filePath = `/images/${req.file.filename}`;
       publicPath = filePath;
     } else {
       return sendResponse.error(res, "没有文件上传或提供图片链接");

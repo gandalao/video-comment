@@ -18,7 +18,7 @@ export function useTable() {
       pageSize: pageSize.value,
     };
     const response = await getActorData(params);
-    tableData.value = response.data.list || [];
+    tableData.value = response.data?.list || [];
     total.value = response.data.total || 0;
   };
 

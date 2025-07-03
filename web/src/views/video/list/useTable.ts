@@ -15,7 +15,7 @@ export function useTable() {
 
   const fetchData = async () => {
     const params = {
-      videoName: searchParams.videoName,
+      ...searchParams,
       page: currentPage.value,
       pageSize: pageSize.value,
     };

@@ -3,12 +3,11 @@ const router = express.Router();
 
 const db = require("../../middleware/mysql.js"); // 引入数据库模块
 
-
 const sendResponse = require("../../utils/response.js");
 const { v4: uuidv4 } = require("uuid");
 
 router.post("/list", async (req, res) => {
-  const { actorName, page = 1, pageSize = 10 } = req.body;
+  const { actorName, page = 1, pageSize = 10 } = req.body || {};
 
   try {
     // 构建查询语句
@@ -22,9 +21,14 @@ router.post("/list", async (req, res) => {
       params.push(`%${actorName}%`);
     }
 
-    // 添加分页
-    sql += ` LIMIT ? OFFSET ?`;
-    params.push(parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize));
+    // 判断是否传入分页参数
+    if (page && pageSize) {
+      sql += ` LIMIT ? OFFSET ?`;
+      params.push(
+        parseInt(pageSize),
+        (parseInt(page) - 1) * parseInt(pageSize)
+      );
+    }
 
     // 执行查询
     const [results, countResult] = await Promise.all([
@@ -32,13 +36,18 @@ router.post("/list", async (req, res) => {
       db.query(countSql, params.slice(0, 1)), // 分页参数不影响总数查询
     ]);
 
-    const total = countResult[0].total;
+    const total = countResult[0].total || 0;
 
-    // 格式化 birth 字段为 YYYY-MM-DD
+    // 格式化 releaseDate 字段为 YYYY-MM-DD
     const formattedResults = results.map((actor) => {
-      if (actor.birth) {
-        const date = new Date(actor.birth);
-        actor.birth = date.toISOString().split("T")[0]; // 转换为 YYYY-MM-DD
+      if (actor.birthday) {
+        const date = new Date(actor.birthday);
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从0开始
+        const day = String(date.getDate()).padStart(2, "0");
+
+        actor.birthday = `${year}-${month}-${day}`;
       }
       return actor;
     });
@@ -54,7 +63,16 @@ router.post("/list", async (req, res) => {
 });
 
 router.post("/add", async (req, res) => {
-  const { actorName, gender, birth, nationality, avatarUrl, introduce } = req.body;
+  const {
+    actorName,
+    actorNameJp,
+    gender,
+    birthday,
+    nationality,
+    avatarUrl,
+    introduce,
+    height,
+  } = req.body;
 
   // 参数校验（基础检查）
   if (!actorName) {
@@ -64,19 +82,21 @@ router.post("/add", async (req, res) => {
   try {
     const sql = `
       INSERT INTO d_actor (
-        id, actorName, gender, birth, nationality, avatarUrl, introduce
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        id, actorName, actorNameJp,gender, birthday, nationality, avatarUrl, introduce,height
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
-    // 如果 birth 为空，则插入 null
+    // 如果 birthday 为空，则插入 null
     const values = [
       uuidv4(),
       actorName,
+      actorNameJp || null,
       gender || null,
-      birth ? birth : null,
+      birthday ? birthday : null,
       nationality || null,
       avatarUrl || null,
       introduce || null,
+      height || null,
     ];
 
     const result = await db.query(sql, values);
@@ -88,7 +108,17 @@ router.post("/add", async (req, res) => {
 
 // 编辑接口
 router.post("/edit", async (req, res) => {
-  const { id, actorName, gender, birth, nationality, avatarUrl, introduce } = req.body;
+  const {
+    id,
+    actorName,
+    actorNameJp,
+    gender,
+    birthday,
+    nationality,
+    avatarUrl,
+    introduce,
+    height,
+  } = req.body;
 
   // 参数校验
   if (!id || !actorName) {
@@ -104,13 +134,17 @@ router.post("/edit", async (req, res) => {
       updateFields.push("actorName = ?");
       values.push(actorName);
     }
+    if (actorNameJp) {
+      updateFields.push("actorNameJp = ?");
+      values.push(actorNameJp);
+    }
     if (gender !== undefined) {
       updateFields.push("gender = ?");
       values.push(gender || null);
     }
-    if (birth !== undefined) {
-      updateFields.push("birth = ?");
-      values.push(birth ? birth : null);
+    if (birthday !== undefined) {
+      updateFields.push("birthday = ?");
+      values.push(birthday ? birthday : null);
     }
     if (nationality !== undefined) {
       updateFields.push("nationality = ?");
@@ -123,6 +157,10 @@ router.post("/edit", async (req, res) => {
     if (introduce !== undefined) {
       updateFields.push("introduce = ?");
       values.push(introduce || null);
+    }
+    if (height !== undefined) {
+      updateFields.push("height = ?");
+      values.push(height || null);
     }
     // 添加更新时间
     updateFields.push("updateTime = NOW()");

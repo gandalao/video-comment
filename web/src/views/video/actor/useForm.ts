@@ -11,10 +11,14 @@ import {
 } from "element-plus";
 export function useForm(refreshData: () => void) {
   const formData = ref({
-    actorName: "",
-    gender: "",
+    actorName: "", // 演员名称
+    actorNameJp: "",//演员名称(日语)
+    gender: "女",
     avatarUrl: "",
-    birth: "",
+    birthday: "2000-01-01", //生日
+    height:"", //身高
+    introduce:"",
+
     imageUrl: "",
   });
 

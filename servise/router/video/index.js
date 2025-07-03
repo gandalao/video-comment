@@ -3,12 +3,17 @@ const router = express.Router();
 
 const db = require("../../middleware/mysql.js"); // 引入数据库模块
 
-
 const sendResponse = require("../../utils/response.js");
 const { v4: uuidv4 } = require("uuid");
 
 router.post("/list", async (req, res) => {
-  const { videoName, page = 1, pageSize = 10 } = req.body;
+  const {
+    videoName,
+    actor,
+    page = 1,
+    pageSize = 10,
+    sortReleaseDate = "desc",
+  } = req.body || {};
 
   try {
     // 构建查询语句
@@ -20,6 +25,18 @@ router.post("/list", async (req, res) => {
       sql += ` WHERE videoName LIKE ?`;
       countSql += ` WHERE videoName LIKE ?`;
       params.push(`%${videoName}%`);
+    }
+
+    if (actor) {
+      sql += ` WHERE actor LIKE ?`;
+      countSql += ` WHERE actor LIKE ?`;
+      params.push(`%${actor}%`);
+    }
+
+    // 添加排序逻辑
+    if (sortReleaseDate) {
+      const order = sortReleaseDate.toLowerCase() === "desc" ? "DESC" : "ASC";
+      sql += ` ORDER BY releaseDate ${order}`;
     }
 
     // 添加分页
@@ -38,7 +55,12 @@ router.post("/list", async (req, res) => {
     const formattedResults = results.map((video) => {
       if (video.releaseDate) {
         const date = new Date(video.releaseDate);
-        video.releaseDate = date.toISOString().split("T")[0]; // 转换为 YYYY-MM-DD
+
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从0开始
+        const day = String(date.getDate()).padStart(2, "0");
+
+        video.releaseDate = `${year}-${month}-${day}`;
       }
       return video;
     });
@@ -54,8 +76,18 @@ router.post("/list", async (req, res) => {
 });
 
 router.post("/add", async (req, res) => {
-  const { videoName, actor, shortDesc, coverUrl, category, releaseDate } =
-    req.body;
+  const {
+    videoName,
+    actor,
+    shortDesc,
+    coverUrl,
+    category,
+    releaseDate,
+    series,
+    subtitle,
+    resolution,
+    videoType,
+  } = req.body;
 
   // 参数校验（基础检查）
   if (!videoName || !actor) {
@@ -65,8 +97,8 @@ router.post("/add", async (req, res) => {
   try {
     const sql = `
       INSERT INTO d_video (
-        id, videoName, actor, shortDesc, coverUrl, category, releaseDate
-      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        id, videoName, actor, shortDesc, coverUrl, category, releaseDate,series,subtitle,resolution,videoType
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     // 如果 releaseDate 为空，则插入 null
@@ -78,6 +110,10 @@ router.post("/add", async (req, res) => {
       coverUrl || null,
       category || null,
       releaseDate ? releaseDate : null,
+      series || null,
+      subtitle || null,
+      resolution || null,
+      videoType || null,
     ];
 
     const result = await db.query(sql, values);
@@ -89,8 +125,19 @@ router.post("/add", async (req, res) => {
 
 // 编辑接口
 router.post("/edit", async (req, res) => {
-  const { id, videoName, actor, shortDesc, coverUrl, category, releaseDate } =
-    req.body;
+  const {
+    id,
+    videoName,
+    actor,
+    shortDesc,
+    coverUrl,
+    category,
+    releaseDate,
+    series,
+    subtitle,
+    resolution,
+    videoType,
+  } = req.body;
 
   // 参数校验
   if (!id || !videoName || !actor) {
@@ -125,6 +172,22 @@ router.post("/edit", async (req, res) => {
     if (releaseDate !== undefined) {
       updateFields.push("releaseDate = ?");
       values.push(releaseDate ? releaseDate : null);
+    }
+    if (series !== undefined) {
+      updateFields.push("series = ?");
+      values.push(series || null);
+    }
+    if (subtitle !== undefined) {
+      updateFields.push("subtitle = ?");
+      values.push(subtitle || null);
+    }
+    if (resolution !== undefined) {
+      updateFields.push("resolution = ?");
+      values.push(resolution || null);
+    }
+    if (videoType !== undefined) {
+      updateFields.push("videoType = ?");
+      values.push(videoType || null);
     }
     // 添加更新时间
     updateFields.push("updateTime = NOW()");

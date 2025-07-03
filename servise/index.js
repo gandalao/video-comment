@@ -8,7 +8,7 @@ const app = express()
 app.use(express.json());
 
 // 托管 uploads 文件夹为静态资源
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+app.use('/images', express.static(path.join(__dirname, 'uploads/images')));
 
 app.use(cors()); // 允许所有来源，也可以指定 origin
 // 或者更细粒度控制
