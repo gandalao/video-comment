@@ -117,7 +117,7 @@ import { ref, onMounted } from 'vue';
 import { useTable } from "./useTable";
 import { useForm } from "./useForm";
 import { Delete, Plus } from '@element-plus/icons-vue'
-import { removeActorData, batchRemoveVideoDataActorData, addActorData } from "@/api/actor";
+import { removeActorData, batchRemoveVideoDataActorData } from "@/api/actor";
 import { ElMessage, ElMessageBox } from 'element-plus';
 
 const {
