@@ -31,10 +31,18 @@ a {
   }
   .view-main {
     flex: 1;
+    overflow: auto;
   }
   .view-footer {
     display: flex;
     justify-content: center;
   }
+}
+
+.ellipsis-two-lines {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
 }
 

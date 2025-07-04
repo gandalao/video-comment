@@ -16,25 +16,52 @@
     <div class="view-main">
       <el-table :data="tableData" @selection-change="handleSelectionChange" border style="height:100%;width: 100%">
         <el-table-column type="selection" :selectable="selectable" width="55" />
-        <el-table-column prop="actorName" label="姓名"></el-table-column>
-        <el-table-column prop="gender" label="性别"></el-table-column>
-        <el-table-column label="年龄">
+        <el-table-column prop="actorName" label="姓名" width="160">
+          <template #default="{ row }">
+            <div class="top-badge">
+              <span>{{ row.actorName }}</span>
+              <div>
+                <span v-if="row.isTop" class="top-badge-bg"></span>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+        <el-table-column prop="actorNameJp" label="日语" width="160"></el-table-column>
+        <el-table-column prop="gender" label="性别" width="120"></el-table-column>
+        <el-table-column label="年龄" width="120">
           <template #default="scope">
             {{ calculateAge(scope.row.birthday) }}
           </template>
         </el-table-column>
-        <el-table-column prop="height" label="身高">
+        <el-table-column prop="height" label="身高" width="120">
           <template #default="scope">
             <span v-if="scope.row.height">{{ scope.row.height }}cm</span>
           </template>
         </el-table-column>
-        <el-table-column prop="birthday" label="出生日期"></el-table-column>
-        <el-table-column fixed="right" label="操作" width="120">
+        <el-table-column prop="introduce" label="介绍" min-width="200">
+          <template #default="{ row }">
+            <el-popover trigger="hover" placement="top" :width="400">
+              <p>{{ row.introduce }}</p>
+              <template #reference>
+                <div class="ellipsis-two-lines">{{ row.introduce }}</div>
+              </template>
+            </el-popover>
+          </template>
+        </el-table-column>
+        <el-table-column prop="birthday" label="出生日期" width="160"></el-table-column>
+        <el-table-column fixed="right" label="操作" width="220">
           <template #default="scope">
-            <el-button link type="primary" size="small" @click="handleEdit(scope.row)">
+            <el-button link type="primary" size="small" @click="handleEdit(scope.row, 'top')">
+              置顶
+            </el-button>
+
+            <el-button link type="primary" size="small" @click="handleEdit(scope.row, 'edit')">
               编辑
             </el-button>
             <el-button link type="danger" size="small" @click="handleRemove(scope.row)">删除</el-button>
+            <el-button v-if="scope.row.isTop" link type="warning" size="small" @click="handleEdit(scope.row, 'untop')">
+              取消置顶
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -95,7 +122,7 @@
 
 
       <el-form-item label="身高" prop="height">
-        <el-input v-model="formData.height"  @input="value => formData.height = value.replace(/[^0-9]/g, '')">
+        <el-input v-model="formData.height" @input="value => formData.height = value.replace(/[^0-9]/g, '')">
           <template #append>cm</template>
         </el-input>
       </el-form-item>
@@ -144,7 +171,13 @@ const {
 
 const selectable = (row: any) => ![1, 2].includes(row.id)
 
-const handleEdit = (row: any) => {
+const handleEdit = (row: any, type: string) => {
+  if (type === 'top' || type === 'untop') {
+    row.isTop = type == 'top' ? 1 : 0;
+    formData.value = row;
+    submitForm(formDataRef.value, type)
+    return
+  }
   if (row.avatarUrl) {
     const files = row.avatarUrl.split(';')
     files.forEach((file: any) => {
@@ -233,4 +266,23 @@ onMounted(() => {
 });
 
 </script>
-<style scoped></style>
+<style scoped lang="scss">
+.top-badge {
+  .top-badge-bg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 0 16px 16px 0;
+    /* 右上方向的三角形 */
+    border-color: transparent red transparent transparent;
+    /* 红色三角形 */
+    transform: rotate(-90deg);
+    /* 斜着的效果 */
+    margin: 2px 0 0 2px;
+    /* 微调位置 */
+  }
+}
+</style>

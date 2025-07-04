@@ -1,10 +1,9 @@
 // useForm.ts
-import { reactive, ref } from "vue";
+import { ref } from "vue";
 import { addVideoData, editVideoData, upload } from "@/api/video";
 import {
   ElMessage,
   type UploadFile,
-  type UploadProps,
   type UploadUserFile,
   type FormInstance,
 } from "element-plus";
@@ -17,20 +16,24 @@ export function useForm(refreshData: () => void) {
     return `${year}-${month}-${day}`;
   }
 
-  const formData = ref({
-    videoName: "", // 视频名称
-    actor: "", // 演员
-    shortDesc: "", //简介
-    coverUrl: "", //封面
-    category: "", //分类
-    series: "", //系列
-    resolution: "1080p", //分辨率
-    releaseDate: formatDate(new Date()), //上映时间
-    subtitle: "外挂字幕", //字幕
-    videoType: "有码", //类型
-    actorList: [],
-    imageUrl: "",
-  });
+  const getDefaultFormData = () => {
+    return {
+      videoName: "", // 视频名称
+      actor: "", // 演员
+      shortDesc: "", //简介
+      coverUrl: "", //封面
+      category: "", //分类
+      series: "", //系列
+      resolution: "1080p", //分辨率
+      releaseDate: formatDate(new Date()), //上映时间
+      subtitle: "外挂字幕", //字幕
+      videoType: "有码", //类型
+      actorList: [],
+      imageUrl: "",
+    };
+  };
+
+  const formData = ref(getDefaultFormData());
 
   const formDataRef = ref();
   const formRules = {
@@ -50,11 +53,15 @@ export function useForm(refreshData: () => void) {
     isEdit.value = typeof enableEdit === "boolean" ? enableEdit : false;
   };
 
-  const closeDialog = () => {
-    addDialogVisible.value = false;
-    formDataRef.value.resetFields();
+  const resetData = () => {
+    formData.value = getDefaultFormData();
     fileList.value = [];
     isEdit.value = false;
+  };
+
+  const closeDialog = () => {
+    addDialogVisible.value = false;
+    resetData();
   };
   const submitForm = async (formEl: FormInstance | undefined, type: string) => {
     // 上传图片

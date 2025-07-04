@@ -44,6 +44,9 @@ const tables = {
       nationality VARCHAR(255)  COMMENT '国籍',
       avatarUrl VARCHAR(255)  COMMENT '头像',
       introduce TEXT  COMMENT '介绍',
+      isTop BOOLEAN DEFAULT 0 COMMENT '是否置顶',
+      topTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '置顶时间',
+      cupSize VARCHAR(255)  COMMENT '罩杯大小',
       updateTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '更新时间',
       createTime TIMESTAMP DEFAULT CURRENT_TIMESTAMP COMMENT '添加时间'
     )

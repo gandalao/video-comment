@@ -1,26 +1,31 @@
 // useForm.ts
-import { reactive, ref } from "vue";
+import { ref } from "vue";
 import { addActorData, editActorData } from "@/api/actor";
 import { upload } from "@/api/video";
 import {
   ElMessage,
   type UploadFile,
-  type UploadProps,
   type UploadUserFile,
   type FormInstance,
 } from "element-plus";
 export function useForm(refreshData: () => void) {
-  const formData = ref({
-    actorName: "", // 演员名称
-    actorNameJp: "",//演员名称(日语)
-    gender: "女",
-    avatarUrl: "",
-    birthday: "2000-01-01", //生日
-    height:"", //身高
-    introduce:"",
+  const getDefaultFormData = () => {
+    return {
+      actorName: "", // 演员名称
+      actorNameJp: "", //演员名称(日语)
+      gender: "女",
+      avatarUrl: "",
+      birthday: "2000-01-01", //生日
+      height: "", //身高
+      introduce: "",
+      isTop: 0,
+      cupSize: "",
 
-    imageUrl: "",
-  });
+      imageUrl: "",
+    };
+  };
+
+  const formData = ref(getDefaultFormData());
 
   const formDataRef = ref();
   const formRules = {
@@ -37,13 +42,15 @@ export function useForm(refreshData: () => void) {
     isEdit.value = typeof enableEdit === "boolean" ? enableEdit : false;
   };
 
-  const closeDialog = () => {
-    addDialogVisible.value = false;
-    if (formDataRef.value) {
-      formDataRef.value.resetFields();
-    }
+  const resetData = () => {
+    formData.value = getDefaultFormData();
     fileList.value = [];
     isEdit.value = false;
+  };
+
+  const closeDialog = () => {
+    addDialogVisible.value = false;
+    resetData();
   };
   const submitForm = async (formEl: FormInstance | undefined, type: string) => {
     if (type == "imageUpload") {
@@ -56,6 +63,12 @@ export function useForm(refreshData: () => void) {
         };
         fileList.value = [list];
       }
+    } else if (type == "top" || type == "untop") {
+      await editActorData(formData.value);
+      let mes = type == "top" ? "置顶成功" : "已取消置顶";
+      ElMessage.success(mes);
+      resetData();
+      refreshData();
     } else {
       if (!formEl) return;
       await formEl.validate(async (valid, fields) => {

@@ -1,9 +1,9 @@
-import { ref, reactive } from "vue";
+import { ref } from "vue";
 import { getVideoData } from "@/api/video";
 
 export function useTable() {
   const tableData = ref([]);
-  const searchParams = reactive({
+  const searchParams = ref({
     videoName: "",
     actor: "",
     category: "",
@@ -15,7 +15,7 @@ export function useTable() {
 
   const fetchData = async () => {
     const params = {
-      ...searchParams,
+      ...searchParams.value,
       page: currentPage.value,
       pageSize: pageSize.value,
     };

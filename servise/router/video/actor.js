@@ -11,7 +11,16 @@ router.post("/list", async (req, res) => {
 
   try {
     // 构建查询语句
-    let sql = `SELECT * FROM d_actor`;
+    let sql = `
+      SELECT * 
+      FROM d_actor 
+      ORDER BY 
+        isTop DESC,
+        CASE 
+          WHEN isTop = 1 THEN topTime 
+          ELSE birthday 
+        END DESC
+    `;
     let countSql = `SELECT COUNT(*) AS total FROM d_actor`;
     const params = [];
 
@@ -72,6 +81,8 @@ router.post("/add", async (req, res) => {
     avatarUrl,
     introduce,
     height,
+    isTop,
+    cupSize,
   } = req.body;
 
   // 参数校验（基础检查）
@@ -82,8 +93,8 @@ router.post("/add", async (req, res) => {
   try {
     const sql = `
       INSERT INTO d_actor (
-        id, actorName, actorNameJp,gender, birthday, nationality, avatarUrl, introduce,height
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        id, actorName, actorNameJp,gender, birthday, nationality, avatarUrl, introduce,height,isTop, topTime, cupSize
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     // 如果 birthday 为空，则插入 null
@@ -97,6 +108,9 @@ router.post("/add", async (req, res) => {
       avatarUrl || null,
       introduce || null,
       height || null,
+      isTop || 0,
+      isTop === 1 ? new Date() : null, // 只有置顶时才记录时间
+      cupSize || null,
     ];
 
     const result = await db.query(sql, values);
@@ -118,6 +132,8 @@ router.post("/edit", async (req, res) => {
     avatarUrl,
     introduce,
     height,
+    isTop,
+    cupSize,
   } = req.body;
 
   // 参数校验
@@ -161,6 +177,18 @@ router.post("/edit", async (req, res) => {
     if (height !== undefined) {
       updateFields.push("height = ?");
       values.push(height || null);
+    }
+    if (isTop !== undefined) {
+      updateFields.push("isTop = ?");
+      values.push(isTop);
+      if (isTop === 1) {
+        updateFields.push("topTime = NOW()");
+      }
+    }
+
+    if (cupSize !== undefined) {
+      updateFields.push("cupSize = ?");
+      values.push(cupSize || null);
     }
     // 添加更新时间
     updateFields.push("updateTime = NOW()");

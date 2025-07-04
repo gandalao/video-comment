@@ -9,21 +9,13 @@
           <el-option v-for="item in actorOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <el-select v-model="searchParams.videoType" placeholder="请选择类型" clearable>
-          <el-option label="无码" value="无码" />
-          <el-option label="有码" value="有码" />
-          <el-option label="AI破解" value="AI破解" />
+          <el-option v-for="item in videoTypeOptions" :key="item.value" :label="label" :value="value" />
         </el-select>
         <el-select v-model="searchParams.resolution" placeholder="请选择分辨率" clearable>
-          <el-option label="720p" value="720p" />
-          <el-option label="1080p" value="1080p" />
-          <el-option label="2k" value="2k" />
-          <el-option label="4k" value="4k" />
+          <el-option v-for="item in resolutionOptions" :key="item.value" :label="label" :value="value" />
         </el-select>
         <el-select v-model="searchParams.subtitle" placeholder="请选择字幕类型" clearable>
-          <el-option label="无字幕" value="无字幕" />
-          <el-option label="外挂字幕" value="外挂字幕" />
-          <el-option label="内嵌字幕" value="内嵌字幕" />
-          <el-option label="字幕不准" value="字幕不准" />
+          <el-option v-for="item in subtitleOptions" :key="item.value" :label="label" :value="value" />
         </el-select>
         <div style="flex: 0 0 160px; display: flex; align-items: center; justify-content: space-between;">
           <el-button style="flex:1" type="success" @click="">重置</el-button>
@@ -36,6 +28,7 @@
         <el-button type="warning" @click="batchAdd">批量添加</el-button>
         <el-button type="success" @click="downloadDoc">下载文档</el-button>
         <el-button type="success" @click="downloadAllDoc">下载全部资源</el-button>
+        <el-button type="primary" @click="checkCoverInvalid">检查无效封面</el-button>
       </div>
     </div>
 
@@ -43,10 +36,29 @@
     <div class="view-main">
       <el-table :data="tableData" @selection-change="handleSelectionChange" border style="height:100%;width: 100%">
         <el-table-column type="selection" :selectable="selectable" width="55" />
-        <el-table-column fixed prop="videoName" label="名称" width="120"></el-table-column>
+        <el-table-column fixed label="名称" width="120">
+          <template #default="{ row }">
+            <div>
+              <span>{{ row.videoName }}</span>
+              <el-tooltip effect="light" content="未添加封面或封面无效" placement="top"
+                v-if="!row.coverUrl || row.isCoverInvalid">
+                <el-button type="danger" :icon="WarningFilled" link />
+              </el-tooltip>
+            </div>
+          </template>
+        </el-table-column>
         <el-table-column prop="releaseDate" label="发行日期" width="140"></el-table-column>
         <el-table-column prop="actor" label="主演" width="240"></el-table-column>
-        <el-table-column prop="shortDesc" label="简介"></el-table-column>
+        <el-table-column prop="shortDesc" label="简介" min-width="200">
+          <template #default="{ row }">
+            <el-popover trigger="hover" placement="top" :width="400">
+              <p>{{ row.shortDesc }}</p>
+              <template #reference>
+                <div class="ellipsis-two-lines">{{ row.shortDesc }}</div>
+              </template>
+            </el-popover>
+          </template>
+        </el-table-column>
         <el-table-column prop="series" label="系列" width="280"></el-table-column>
 
         <el-table-column width="200">
@@ -145,25 +157,17 @@
       </el-form-item>
       <el-form-item label="类型" prop="videoType">
         <el-select v-model="formData.videoType" placeholder="请选择类型">
-          <el-option label="无码" value="无码" />
-          <el-option label="有码" value="有码" />
-          <el-option label="AI破解" value="AI破解" />
+          <el-option v-for="item in videoTypeOptions" :key="item.value" :label="label" :value="value" />
         </el-select>
       </el-form-item>
       <el-form-item label="分辨率" prop="resolution">
         <el-select v-model="formData.resolution" placeholder="请选择分辨率">
-          <el-option label="720p" value="720p" />
-          <el-option label="1080p" value="1080p" />
-          <el-option label="2k" value="2k" />
-          <el-option label="4k" value="4k" />
+          <el-option v-for="item in resolutionOptions" :key="item.value" :label="label" :value="value" />
         </el-select>
       </el-form-item>
       <el-form-item label="字幕" prop="subtitle">
         <el-select v-model="formData.subtitle" placeholder="请选择字幕类型">
-          <el-option label="无字幕" value="无字幕" />
-          <el-option label="外挂字幕" value="外挂字幕" />
-          <el-option label="内嵌字幕" value="内嵌字幕" />
-          <el-option label="字幕不准" value="字幕不准" />
+          <el-option v-for="item in subtitleOptions" :key="item.value" :label="label" :value="value" />
         </el-select>
       </el-form-item>
       <el-form-item label-width="0">
@@ -180,14 +184,60 @@
 import { ref, onMounted } from 'vue';
 import { useTable } from "./useTable";
 import { useForm } from "./useForm";
-import { Delete, Plus } from '@element-plus/icons-vue'
-import { removeVideoData, batchRemoveVideoData, exportVideoInfo, addVideoData, upload } from "@/api/video";
+import { Delete, Plus, WarningFilled } from '@element-plus/icons-vue'
+import { removeVideoData, batchRemoveVideoData, addVideoData } from "@/api/video";
 import { ElMessage, ElMessageBox } from 'element-plus';
-import dataset from './dataset';
 
 import { getActorData } from "@/api/actor"; // 引入获取演员列表的API
 
-const actorOptions = ref([]); // 存储演员列表
+
+const subtitleOptions = [
+  {
+    label: "无字幕",
+    value: "无字幕"
+  }, {
+    label: "外挂字幕",
+    value: "外挂字幕"
+  },
+  {
+    label: "内嵌字幕",
+    value: "内嵌字幕"
+  },
+  {
+    label: "字幕不准",
+    value: "字幕不准"
+  }
+]
+const videoTypeOptions = [
+  {
+    label: "无码",
+    value: "无码"
+  }, {
+    label: "有码",
+    value: "有码"
+  },
+  {
+    label: "AI破解",
+    value: "AI破解"
+  },
+]
+const resolutionOptions = [
+  {
+    label: "720p",
+    value: "720p"
+  }, {
+    label: "1080p",
+    value: "1080p"
+  },
+  {
+    label: "2k",
+    value: "2k"
+  },
+  {
+    label: "4k",
+    value: "4k"
+  }
+]
 
 const {
   tableData,
@@ -309,23 +359,63 @@ const batchAdd = async () => {
 
 }
 
+const checkCoverInvalid = async () => {
+  const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+  const chunkSize = 5;
+  let invalidCount = 0;
+
+  const data = tableData.value?.filter(item => Array.isArray(tableData.value));
+
+  if (!data || data.length === 0) return;
+
+  const validateCover = async (item) => {
+    if (!item.coverUrl || typeof item.coverUrl !== 'string') {
+      item.isCoverInvalid = true;
+      invalidCount++;
+      return;
+    }
+
+    const url = import.meta.env.VITE_BASE_URL + item.coverUrl.trim();
+
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !validImageTypes.some(type => contentType.includes(type))) throw new Error('Not an image');
+    } catch {
+      item.isCoverInvalid = true;
+      invalidCount++;
+    }
+  };
+
+  // 分块并发请求控制
+  for (let i = 0; i < data.length; i += chunkSize) {
+    const chunk = data.slice(i, i + chunkSize);
+    await Promise.all(chunk.map(validateCover));
+  }
+
+  ElMessage[invalidCount ? 'warning' : 'success'](
+    invalidCount ? `共有 ${invalidCount} 个封面无效，请检查！` : '未发现无效封面！'
+  );
+};
+
+
+const actorOptions = ref([]); // 存储演员列表
+
+const fetchActorData = async () => {
+  const res = await getActorData({});
+  const list = res?.data?.list || [];
+  actorOptions.value = list.map(item => ({
+    ...item,
+    label: item.actorName,
+    value: item.actorName
+  }));
+};
+
 // 初始化加载数据
 onMounted(async () => {
-  try {
-    const res = await getActorData(); // 请求演员列表
-    const list = res?.data?.list || [];
-    const actors = list.map((item: any) => {
-      return {
-        ...item,
-        label: item.actorName,
-        value: item.actorName
-      }
-    })
-    actorOptions.value = actors;
-  } catch (error) {
-    console.error('获取演员列表失败:', error);
-  }
   fetchData();
+  fetchActorData()
 });
 
 </script>
