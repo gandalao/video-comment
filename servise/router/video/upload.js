@@ -53,47 +53,66 @@ router.post("/uploads", multer.array("files"), (req, res) => {
 //   }
 // });
 
-// 添加或修改 upload 接口以支持 imageUrl 下载
-router.post("/upload", multer.single("file"), async (req, res) => {
+// 处理本地文件上传
+router.post("/upload", multer.single("file"), (req, res) => {
   try {
-    const { imageUrl,filename } = req.body;
-
-    let filePath = '';
-    let publicPath = '';
-
-    if (imageUrl) {
-      // 下载远程图片
-      const response = await axios.get(imageUrl, { responseType: 'stream' });
-      if(!filename){
-        filename = path.basename(imageUrl);
-      }
-      
-      filePath = path.join(__dirname, '../../uploads/images', filename);
-      publicPath = `/uploads/images/${filename}`;
-
-      const writer = fs.createWriteStream(filePath);
-      response.data.pipe(writer);
-
-      await new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-      });
-    } else if (req.file) {
-      // 使用上传的文件
-      filePath = `/images/${req.file.filename}`;
-      publicPath = filePath;
-    } else {
-      return sendResponse.error(res, "没有文件上传或提供图片链接");
+    if (!req.file) {
+      return sendResponse.error(res, "没有文件上传");
     }
 
-    sendResponse.success(res, "操作成功", {
-      url: publicPath,
-    });
+    const publicPath = `/images/${req.file.filename}`;
+    sendResponse.success(res, "上传成功", { url: publicPath });
   } catch (err) {
+    console.error("上传失败:", err.message || err);
     sendResponse.error(res, "上传失败");
   }
 });
 
+// 处理远程 URL 图片下载
+router.post("/upload/remote", async (req, res) => {
+  try {
+    const { imageUrl, filename } = req.body;
+
+    if (!imageUrl) {
+      return sendResponse.error(res, "缺少图片链接");
+    }
+
+    const uploadDir = path.join(__dirname, '../../uploads/images');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const finalFilename = filename || path.basename(imageUrl);
+    const filePath = path.join(uploadDir, finalFilename);
+    const publicPath = `/images/${finalFilename}`;
+
+    const writer = fs.createWriteStream(filePath);
+
+    const response = await axios.get(imageUrl, {
+      responseType: 'stream',
+      httpsAgent: new (require('https').Agent)({ rejectUnauthorized: false }),
+      headers: {
+        'User-Agent': 'Mozilla/5.0'
+      }
+    });
+
+    if (response.status !== 200) {
+      throw new Error(`远程图片下载失败，HTTP状态码: ${response.status}`);
+    }
+
+    response.data.pipe(writer);
+
+    await new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
+
+    sendResponse.success(res, "操作成功", { url: publicPath });
+  } catch (err) {
+    console.error("上传失败:", err.message || err);
+    sendResponse.error(res, "上传失败");
+  }
+});
 
 
 module.exports = router;

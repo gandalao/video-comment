@@ -10,57 +10,84 @@ router.post("/list", async (req, res) => {
   const {
     videoName,
     actor,
+    videoType,
+    resolution,
+    subtitle,
     page = 1,
     pageSize = 10,
     sortReleaseDate = "desc",
   } = req.body || {};
 
   try {
+    // 参数校验
+    const pageNum = parseInt(page, 10);
+    const pageSizeNum = parseInt(pageSize, 10);
+    if (isNaN(pageNum) || pageNum < 1 || isNaN(pageSizeNum) || pageSizeNum < 1) {
+      return sendResponse.error(res, "分页参数非法");
+    }
+
+    const order = sortReleaseDate.toLowerCase() === "desc" ? "DESC" : "ASC";
+
     // 构建查询语句
-    let sql = `SELECT * FROM d_video`;
-    let countSql = `SELECT COUNT(*) AS total FROM d_video`;
+    const sqlParts = [`SELECT * FROM d_video`];
+    const countSqlParts = [`SELECT COUNT(*) AS total FROM d_video`];
     const params = [];
 
+    let whereClauses = [];
     if (videoName) {
-      sql += ` WHERE videoName LIKE ?`;
-      countSql += ` WHERE videoName LIKE ?`;
+      whereClauses.push(`videoName LIKE ?`);
       params.push(`%${videoName}%`);
     }
-
     if (actor) {
-      sql += ` WHERE actor LIKE ?`;
-      countSql += ` WHERE actor LIKE ?`;
+      whereClauses.push(`actor LIKE ?`);
       params.push(`%${actor}%`);
     }
-
-    // 添加排序逻辑
-    if (sortReleaseDate) {
-      const order = sortReleaseDate.toLowerCase() === "desc" ? "DESC" : "ASC";
-      sql += ` ORDER BY releaseDate ${order}`;
+    if (videoType) {
+      whereClauses.push(`videoType = ?`);
+      params.push(videoType);
+    }
+    if (resolution) {
+      whereClauses.push(`resolution = ?`);
+      params.push(resolution);
+    }
+    if (subtitle) {
+      whereClauses.push(`subtitle = ?`);
+      params.push(subtitle);
     }
 
-    // 添加分页
-    sql += ` LIMIT ? OFFSET ?`;
-    params.push(parseInt(pageSize), (parseInt(page) - 1) * parseInt(pageSize));
+    if (whereClauses.length > 0) {
+      sqlParts.push(`WHERE ${whereClauses.join(" AND ")}`);
+      countSqlParts.push(`WHERE ${whereClauses.join(" AND ")}`);
+    }
+
+    // 排序
+    sqlParts.push(`ORDER BY releaseDate ${order}`);
+
+    // 分页
+    sqlParts.push(`LIMIT ? OFFSET ?`);
+    params.push(pageSizeNum, (pageNum - 1) * pageSizeNum);
+
+    const sql = sqlParts.join(" ");
+    const countSql = countSqlParts.join(" ");
 
     // 执行查询
     const [results, countResult] = await Promise.all([
       db.query(sql, params),
-      db.query(countSql, params.slice(0, 1)), // 分页参数不影响总数查询
+      db.query(countSql, params.slice(0, whereClauses.length * 2 + 1)), // 去除分页参数
     ]);
 
-    const total = countResult[0].total;
+    const total = countResult[0]?.total || 0;
 
     // 格式化 releaseDate 字段为 YYYY-MM-DD
     const formattedResults = results.map((video) => {
       if (video.releaseDate) {
         const date = new Date(video.releaseDate);
-
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // 月份从0开始
-        const day = String(date.getDate()).padStart(2, "0");
-
-        video.releaseDate = `${year}-${month}-${day}`;
+        if (!isNaN(date.getTime())) {
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          video.releaseDate = `${year}-${month}-${day}`;
+        }
       }
       return video;
     });
@@ -70,7 +97,10 @@ router.post("/list", async (req, res) => {
       total,
     });
   } catch (err) {
-    console.error("查询失败:", err);
+    console.error("查询失败:", err, {
+      sql: sql,
+      params: params,
+    });
     sendResponse.error(res, "服务器内部错误");
   }
 });

@@ -3,14 +3,20 @@ import { getVideoData } from "@/api/video";
 
 export function useTable() {
   const tableData = ref([]);
-  const searchParams = ref({
-    videoName: "",
-    actor: "",
-    category: "",
-  });
+  const getSearchParams = () => {
+    return {
+      videoName: "",
+      actor: "",
+      category: "",
+      videoType: "",
+      resolution: "",
+      subtitle: "",
+    }
+  };
+  const searchParams = ref(getSearchParams());
 
   const currentPage = ref(1);
-  const pageSize = ref(15);
+  const pageSize = ref(20);
   const total = ref(0);
 
   const fetchData = async () => {
@@ -29,6 +35,11 @@ export function useTable() {
     fetchData();
   };
 
+  const handleSizeChange = (size: number) => {
+    pageSize.value = size;
+    fetchData();
+  };
+
   return {
     tableData,
     searchParams,
@@ -37,5 +48,7 @@ export function useTable() {
     total,
     fetchData,
     handlePageChange,
+    handleSizeChange,
+    getSearchParams
   };
 }

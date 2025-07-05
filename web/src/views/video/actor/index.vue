@@ -35,12 +35,12 @@
         </el-table-column>
         <el-table-column prop="height" label="身高" width="120">
           <template #default="scope">
-            <span v-if="scope.row.height">{{ scope.row.height }}cm</span>
+            <span v-if="scope.row.height">{{ scope.row.height / 100 }}m</span>
           </template>
         </el-table-column>
         <el-table-column prop="introduce" label="介绍" min-width="200">
           <template #default="{ row }">
-            <el-popover trigger="hover" placement="top" :width="400">
+            <el-popover trigger="hover" placement="top-start" :width="400">
               <p>{{ row.introduce }}</p>
               <template #reference>
                 <div class="ellipsis-two-lines">{{ row.introduce }}</div>

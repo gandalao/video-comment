@@ -3,29 +3,38 @@
     <!-- 操作栏 -->
     <div class="view-header">
       <div style="display: flex; gap: 10px;">
-        <el-input v-model="searchParams.videoName" placeholder="输入视频名称搜索" />
-        <el-select v-model="searchParams.actor" clearable filterable allow-create default-first-option
-          :reserve-keyword="false" placeholder="请选择主演">
+        <el-input v-model="searchParams.videoName" placeholder="输入视频名称搜索" clearable />
+        <el-select v-model="searchParams.actor" filterable allow-create default-first-option :reserve-keyword="false"
+          placeholder="请选择主演" clearable @change="fetchData">
           <el-option v-for="item in actorOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-select v-model="searchParams.videoType" placeholder="请选择类型" clearable>
-          <el-option v-for="item in videoTypeOptions" :key="item.value" :label="label" :value="value" />
+        <el-select v-model="searchParams.videoType" placeholder="请选择类型" clearable @change="fetchData">
+          <el-option v-for="item in videoTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-select v-model="searchParams.resolution" placeholder="请选择分辨率" clearable>
-          <el-option v-for="item in resolutionOptions" :key="item.value" :label="label" :value="value" />
+        <el-select v-model="searchParams.resolution" placeholder="请选择分辨率" clearable @change="fetchData">
+          <el-option v-for="item in resolutionOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
-        <el-select v-model="searchParams.subtitle" placeholder="请选择字幕类型" clearable>
-          <el-option v-for="item in subtitleOptions" :key="item.value" :label="label" :value="value" />
+        <el-select v-model="searchParams.subtitle" placeholder="请选择字幕类型" clearable @change="fetchData">
+          <el-option v-for="item in subtitleOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
         <div style="flex: 0 0 160px; display: flex; align-items: center; justify-content: space-between;">
-          <el-button style="flex:1" type="success" @click="">重置</el-button>
-          <el-button style="flex:1" type="primary" @click="fetchData">搜索</el-button>
+          <el-dropdown split-button type="primary" @click="searchClick" @command="resetSearchData">
+            <div style="width: 60px;text-align: center;">搜 索</div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="reset">重置搜索</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <!-- <el-button style="flex:1" type="success" @click="resetSearchData">重置</el-button> -->
+          <!-- <el-button style="flex:1" type="primary" @click="searchClick">搜索</el-button> -->
         </div>
+
       </div>
       <div>
         <el-button type="primary" @click="showDialog">添加视频</el-button>
         <el-button type="danger" @click="batchDelete">批量删除</el-button>
-        <el-button type="warning" @click="batchAdd">批量添加</el-button>
+        <!-- <el-button type="warning" @click="batchAdd">批量添加</el-button> -->
         <el-button type="success" @click="downloadDoc">下载文档</el-button>
         <el-button type="success" @click="downloadAllDoc">下载全部资源</el-button>
         <el-button type="primary" @click="checkCoverInvalid">检查无效封面</el-button>
@@ -36,7 +45,7 @@
     <div class="view-main">
       <el-table :data="tableData" @selection-change="handleSelectionChange" border style="height:100%;width: 100%">
         <el-table-column type="selection" :selectable="selectable" width="55" />
-        <el-table-column fixed label="名称" width="120">
+        <el-table-column fixed label="名称" width="140">
           <template #default="{ row }">
             <div>
               <span>{{ row.videoName }}</span>
@@ -51,7 +60,7 @@
         <el-table-column prop="actor" label="主演" width="240"></el-table-column>
         <el-table-column prop="shortDesc" label="简介" min-width="200">
           <template #default="{ row }">
-            <el-popover trigger="hover" placement="top" :width="400">
+            <el-popover trigger="hover" placement="top-start" :width="400">
               <p>{{ row.shortDesc }}</p>
               <template #reference>
                 <div class="ellipsis-two-lines">{{ row.shortDesc }}</div>
@@ -101,8 +110,9 @@
 
     <!-- 分页 -->
     <div class="view-footer">
-      <el-pagination background layout="prev, pager, next" :total="total" :page-size="pageSize"
-        v-model:current-page="currentPage" @current-change="handlePageChange" />
+      <el-pagination background layout="total,sizes, prev, pager, next" :total="total"
+        v-model:current-page="currentPage" v-model:page-size="pageSize" :page-sizes="[10, 20, 50, 100]"
+        @current-change="handlePageChange" @size-change="handleSizeChange" />
     </div>
   </div>
 
@@ -125,10 +135,10 @@
 
       <el-form-item label="封面">
         <div style="width: 100%;">
-          <div style="display: flex; align-items: center; gap: 10px;margin-bottom: 10px;">
+          <!-- <div style="display: flex; align-items: center; gap: 10px;margin-bottom: 10px;">
             <el-input placeholder="输入图片链接上传" v-model="formData.imageUrl" style="width: 100%;"></el-input>
             <el-button type="success" @click="submitForm(formDataRef, 'imageUpload')">上 传</el-button>
-          </div>
+          </div> -->
           <el-upload action="" :limit="1" list-type="picture-card" accept=".pdf,.gif,.jpg,.png" :on-change="fileChange"
             :auto-upload="false" v-model:file-list="fileList" :disabled="fileList.length > 0">
             <el-icon>
@@ -157,17 +167,17 @@
       </el-form-item>
       <el-form-item label="类型" prop="videoType">
         <el-select v-model="formData.videoType" placeholder="请选择类型">
-          <el-option v-for="item in videoTypeOptions" :key="item.value" :label="label" :value="value" />
+          <el-option v-for="item in videoTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="分辨率" prop="resolution">
         <el-select v-model="formData.resolution" placeholder="请选择分辨率">
-          <el-option v-for="item in resolutionOptions" :key="item.value" :label="label" :value="value" />
+          <el-option v-for="item in resolutionOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label="字幕" prop="subtitle">
         <el-select v-model="formData.subtitle" placeholder="请选择字幕类型">
-          <el-option v-for="item in subtitleOptions" :key="item.value" :label="label" :value="value" />
+          <el-option v-for="item in subtitleOptions" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
       </el-form-item>
       <el-form-item label-width="0">
@@ -246,7 +256,9 @@ const {
   pageSize,
   total,
   fetchData,
-  handlePageChange
+  handlePageChange,
+  handleSizeChange,
+  getSearchParams
 } = useTable();
 
 const {
@@ -342,22 +354,22 @@ const downloadAllDoc = () => {
 }
 
 
-const batchAdd = async () => {
-  const params = dataset.map((item: any) => {
-    item.coverUrl = "/" + item.videoName + ".png"
-    return {
-      ...formData.value,
-      ...item,
-    }
-  })
-  console.log(params);
+// const batchAdd = async () => {
+//   const params = dataset.map((item: any) => {
+//     item.coverUrl = "/" + item.videoName + ".png"
+//     return {
+//       ...formData.value,
+//       ...item,
+//     }
+//   })
+//   console.log(params);
 
-  params.forEach(async (item: any) => {
-    await addVideoData(item)
-  })
-  fetchData()
+//   params.forEach(async (item: any) => {
+//     await addVideoData(item)
+//   })
+//   fetchData()
 
-}
+// }
 
 const checkCoverInvalid = async () => {
   const validImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -375,7 +387,8 @@ const checkCoverInvalid = async () => {
       return;
     }
 
-    const url = import.meta.env.VITE_BASE_URL + item.coverUrl.trim();
+    // const url = import.meta.env.VITE_BASE_URL + item.coverUrl.trim();
+    const url = "/api" + item.coverUrl.trim();
 
     try {
       const res = await fetch(url);
@@ -411,7 +424,15 @@ const fetchActorData = async () => {
     value: item.actorName
   }));
 };
-
+const resetSearchData = () => {
+  currentPage.value = 1
+  searchParams.value = getSearchParams()
+  fetchData()
+};
+const searchClick = (command: string | number | object) => {
+  currentPage.value = 1
+  fetchData()
+};
 // 初始化加载数据
 onMounted(async () => {
   fetchData();
